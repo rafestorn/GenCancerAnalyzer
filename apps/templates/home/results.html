@@ -1,0 +1,19 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Dashboard {% endblock title %}
+
+{% block stylesheets %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock stylesheets %}
+
+{% block content %}
+    <h1>Volcano Plot</h1>
+    {{ volcano_plot | safe }}
+
+    <h1>BarPlot</h1>
+    {{ bar_plot | safe }}
+
+    <h1>Correlation Plot</h1>
+    {{ corr_plot | safe }}
+
+{% endblock content %}

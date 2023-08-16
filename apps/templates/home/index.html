@@ -8,6 +8,11 @@
 {% block content %}
     <form action="create" method="POST">
         {% csrf_token %}
-        <button type="submit">Pulsa</button>
+        <button type="submit">Descargar</button>
+    </form>
+
+    <form action="analysis" method="POST">
+        {% csrf_token %}
+        <button type="submit">Análisis</button>
     </form>
 {% endblock content %}
