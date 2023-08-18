@@ -7,7 +7,7 @@ urlpatterns = [
     path('', views.index, name='home'),
     path('create', views.download, name='download'),
     path('analysis', views.analysis, name='analysis'),
-    path('volcanoPlot', views.results, name='results'),
+    path('results', views.results, name='results'),
     # Matches any html file
     re_path(r'^.*\.*', views.pages, name='pages'),
 

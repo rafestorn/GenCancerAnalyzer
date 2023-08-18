@@ -131,6 +131,8 @@ def results(request):
     volcanoPlot = volcanoPlotDE()
     barPlot = barplotDE()
     corrPlot = corrPlotDE()
-
-    return render(request, 'home/results.html', {'volcano_plot': volcanoPlot, 'bar_plot': barPlot, 'corr_plot': corrPlot})
+    df = pd.read_csv('TCGA-CHOL/DEGALL_CHOL.csv')
+    df.rename(columns={'Unnamed: 0': 'Id'}, inplace=True)
+    dict = df.to_dict('records')
+    return render(request, 'home/results.html', {'volcano_plot': volcanoPlot, 'bar_plot': barPlot, 'corr_plot': corrPlot, 'data': dict})
     

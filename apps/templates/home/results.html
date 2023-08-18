@@ -3,10 +3,50 @@
 {% block title %} Dashboard {% endblock title %}
 
 {% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+  
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 {% endblock stylesheets %}
 
 {% block content %}
+
+    <h1>Datos del análisis de expresión diferencial</h1>
+    <div id="datatableContainer" style="display: none; width: 80%;">
+        <table id="miTabla" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Identifier</th>
+                    <th>Symbol</th>
+                    <th>Group</th>
+                    <th>BaseMean</th>
+                    <th>LogFC</th>
+                    <th>LfcSE</th>
+                    <th>Stat</th>
+                    <th>PValue</th>
+                    <th>FDR</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in data %}
+                <tr>
+                    <td>{{ record.Id }}</td>
+                    <td>{{ record.symbol}}</td>
+                    <td>{{ record.group}}</td>
+                    <td>{{ record.baseMean}}</td>
+                    <td>{{ record.logFC}}</td>
+                    <td>{{ record.lfcSE}}</td>
+                    <td>{{ record.stat}}</td>
+                    <td>{{ record.PValue}}</td>
+                    <td>{{ record.FDR}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
     <h1>Volcano Plot</h1>
     {{ volcano_plot | safe }}
 
@@ -17,3 +57,14 @@
     {{ corr_plot | safe }}
 
 {% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready( function () {
+    $('#miTabla').DataTable({
+        scrollX: true,
+    });
+    $('#datatableContainer').show();
+} );
+</script>
+{% endblock javascripts %}
