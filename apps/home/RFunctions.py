@@ -71,6 +71,10 @@ def analysisRNA(projectID, dataType):
                         filter=TRUE)
                     
         write.csv(result, file = "{projectID}/DEGALL_CHOL.csv", row.names = TRUE)
+
+        enrichOutput <- gdcEnrichAnalysis(gene = rownames(result), simplify = TRUE)
+
+        write.csv(enrichOutput, file = "{projectID}/ENRICH_ANALYSIS.csv", row.names = TRUE)
         '''
     robjects.r(r_script)
 
