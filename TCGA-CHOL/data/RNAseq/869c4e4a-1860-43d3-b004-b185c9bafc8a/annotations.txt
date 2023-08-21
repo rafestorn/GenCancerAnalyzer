@@ -1,0 +1,2 @@
+id	submitter_id	entity_type	entity_id	category	classification	created_datetime	status	notes
+9ed529e3-3c51-55b0-9f91-f6dbf6eb4f86	26868	case	f2d42e03-ca8d-4b57-ae39-0cc8f37b1b67	Neoadjuvant therapy	Notification	2015-02-26T00:00:00	Approved	Patient received Gemcitabine + capecitabine prior to cancer procurement.

@@ -56,6 +56,9 @@
     <h1>Correlation Plot</h1>
     {{ corr_plot | safe }}
 
+    <h1>Functional Enrichment Analysis</h1>
+    <div id="myHorizontalBarChart"></div>
+
 {% endblock content %}
 
 {% block javascripts %}
@@ -66,5 +69,29 @@ $(document).ready( function () {
     });
     $('#datatableContainer').show();
 } );
+// document.addEventListener("DOMContentLoaded", function() {
+//     var contextData = {{ enrichData | safe }};
+//     var Dict = {};
+//     contextData.forEach(entry => {
+//         Dict[entry.Terms] = -Math.log10(entry.FDR);
+//     });
+    
+//     var trace = {
+//         x: Object.keys(Dict),
+//         y: Object.values(Dict),
+//         type: 'bar',
+//         orientation: 'h'
+//     };
+    
+//     var layout = {
+//         title: 'Horizontal Bar Chart'
+//     };
+    
+//     var plotData = [trace];
+    
+//     Plotly.newPlot('myHorizontalBarChart', plotData, layout);
+// });
+
 </script>
+
 {% endblock javascripts %}

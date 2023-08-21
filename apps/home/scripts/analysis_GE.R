@@ -32,8 +32,6 @@ metaMatrix.RNA <- gdcFilterDuplicate(metaMatrix.RNA)
 # Filter non-Primary Tumor and non-Solid Tissue Normal samples in RNAseq metadata
 metaMatrix.RNA <- gdcFilterSampleType(metaMatrix.RNA)
 
-metaMatrix.RNA[1:5,]
-
 metaMatrix.RNA[,c("age_at_diagnosis", "days_to_death", "days_to_last_follow_up")] %>% summary()
 
 
@@ -86,24 +84,9 @@ merge_rna <-function(metadata, fdir){
     return(combined_df)
 }
 
-rnaCounts <-  merge_rna(metaMatrix.RNA, "TCGA-CHOL_0406/RNAseq")
-rnaCounts[1:5,]
+rna_counts <-  merge_rna(metaMatrix.RNA, "TCGA-CHOL_0406/RNAseq")
+rna_counts[1:5,]
 
-dim(rnaCounts)
+dim(rna_counts)
 
-
-# Normalization of RNAseq data 
-rnaExpr <- gdcVoomNormalization(counts = rnaCounts, filter = FALSE)
-
-
-
-DEGAll_CHOL<- gdcDEAnalysis(counts = rnaCounts, 
-                        group      = metaMatrix.RNA$sample_type, 
-                        comparison = 'PrimaryTumor-SolidTissueNormal', 
-                        method     = 'DESeq2',
-                        filter=TRUE)
-
-DEGAll_CHOL[1:5,]
-
-gdcVolcanoPlot(DEGAll_CHOL)
-
+write.csv(rna_counts, file = "TCGA-CHOL_0416/rnaCounts.csv", row.names = TRUE)

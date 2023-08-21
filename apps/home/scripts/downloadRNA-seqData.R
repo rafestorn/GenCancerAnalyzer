@@ -1,19 +1,21 @@
-options(warn=-1)
-
 library(GDCRNATools)
-library(dplyr)
-library(tidyr)
 
-download_RNAseq_data <- function(project_id, data_type) {
-  # Definir el directorio de destino
-  rnadir <- paste(project_id, 'data/RNAseq', sep='/')
-  
-  # Descargar RNAseq data 
-  gdcRNADownload(project.id     = project_id, 
-                 data.type      = data_type, 
-                 write.manifest = FALSE,
-                 method         = 'gdc-client',
-                 directory      = rnadir)
+getMetaMatrix <- function(projectID, dataType) {
+  metaMatrix.RNA <- gdcParseMetadata(project.id = projectID,
+                                    data.type = dataType, 
+                                    write.meta = FALSE)
+
+  # Filter duplicates
+  metaMatrix.RNA <- gdcFilterDuplicate(metaMatrix.RNA)
+
+  # Filter non-Primary Tumor and non-Solid Tissue Normal samples in RNAseq metadata
+  metaMatrix.RNA <- gdcFilterSampleType(metaMatrix.RNA)
+  return(metaMatrix.RNA)
 }
 
-download_RNAseq_data('TCGA-CHOL', 'RNA-Seq')
+# Call the R function and save the result to a variable
+result <- getMetaMatrix('TCGA-CHOL', 'RNAseq')
+
+# Print the result
+write.csv(re, file = "{projectID}/metaMatrix.csv", row.names = TRUE)
+
