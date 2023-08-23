@@ -3,6 +3,7 @@ from django import template
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+import requests
 from apps.home.RFunctions import downloadRNA, analysisRNA
 from apps.home.apiGDC import statusGDCApi
 import pandas as pd
@@ -219,7 +220,5 @@ def results(request):
     corrPlot = corrPlotDE()
     enrichDict = enrichBarData()
     df = pd.read_csv('TCGA-CHOL/DEGALL_CHOL.csv')
-    df.rename(columns={'Unnamed: 0': 'Id'}, inplace=True)
     dict = df.to_dict('records')
-    print(enrichDict)
     return render(request, 'home/results.html', {'volcano_plot': volcanoPlot, 'bar_plot': barPlot, 'corr_plot': corrPlot, 'data': dict, 'enrichData': enrichDict})
