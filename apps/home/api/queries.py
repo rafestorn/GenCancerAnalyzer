@@ -8,14 +8,13 @@ from drf_yasg import openapi
 
 def paginate_queryset(queryset, page, max_items):
     if max_items and int(max_items) > 0:
-        if page is None:
-            page = 1
         start_index = (int(page) - 1) * int(max_items)
         end_index = int(page) * int(max_items)
         pag_queryset = queryset[start_index:end_index]
     else:
         pag_queryset = queryset
     return pag_queryset
+
 
 class StudyCaseViewSet(APIView):
     @swagger_auto_schema(
@@ -29,6 +28,9 @@ class StudyCaseViewSet(APIView):
         sc = request.query_params.get('studyCase')
         max_items = request.query_params.get('maxItems')
         page = request.query_params.get('page')
+
+        if page is None:
+            page = 1
 
         queryset = StudyCase.objects.all()
 
@@ -60,6 +62,9 @@ class MetadataCaseViewSet(APIView):
         sc = request.query_params.get('studyCase')
         max_items = request.query_params.get('maxItems')
         page = request.query_params.get('page')
+
+        if page is None:
+            page = 1
 
         queryset = MetaData.objects.all()
 
@@ -93,6 +98,9 @@ class DiffExprAnalysisCaseViewSet(APIView):
         group = request.query_params.get('group')
         max_items = request.query_params.get('maxItems')
         page = request.query_params.get('page')
+
+        if page is None:
+            page = 1
 
         queryset = DiffExprAnalysisData.objects.all()
 
@@ -133,6 +141,9 @@ class EnrichAnalysisCaseViewSet(APIView):
         orderBy = request.query_params.get('orderBy')
         max_items = request.query_params.get('maxItems')
         page = request.query_params.get('page')
+
+        if page is None:
+            page = 1
 
         queryset = EnrichData.objects.all()
         
