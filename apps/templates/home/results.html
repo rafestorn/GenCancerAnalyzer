@@ -1,5 +1,7 @@
 {% extends 'layouts/base.html' %}
 
+{% load static %}
+
 {% block title %} Dashboard {% endblock title %}
 
 {% block stylesheets %}
@@ -14,7 +16,7 @@
 {% block content %}
 
     <h1>Datos del análisis de expresión diferencial</h1>
-    <div id="datatableContainer" style="display: none; width: 80%;">
+    <div id="datatableContainer", style="width: 80%;">
         <table id="miTabla" class="table table-bordered">
             <thead>
                 <tr>
@@ -29,26 +31,11 @@
                     <th>FDR</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for record in data %}
-                <tr>
-                    <td>{{ record.Id }}</td>
-                    <td>{{ record.symbol}}</td>
-                    <td>{{ record.group}}</td>
-                    <td>{{ record.baseMean}}</td>
-                    <td>{{ record.logFC}}</td>
-                    <td>{{ record.lfcSE}}</td>
-                    <td>{{ record.stat}}</td>
-                    <td>{{ record.PValue}}</td>
-                    <td>{{ record.FDR}}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 
-    <h1>Volcano Plot</h1>
-    {{ volcano_plot | safe }}
+    {% include "includes/volcanoPlot.html" %}
 
     <h1>BarPlot</h1>
     {{ bar_plot | safe }}
@@ -62,36 +49,5 @@
 {% endblock content %}
 
 {% block javascripts %}
-<script>
-$(document).ready( function () {
-    $('#miTabla').DataTable({
-        scrollX: true,
-    });
-    $('#datatableContainer').show();
-} );
-// document.addEventListener("DOMContentLoaded", function() {
-//     var contextData = {{ enrichData | safe }};
-//     var Dict = {};
-//     contextData.forEach(entry => {
-//         Dict[entry.Terms] = -Math.log10(entry.FDR);
-//     });
-    
-//     var trace = {
-//         x: Object.keys(Dict),
-//         y: Object.values(Dict),
-//         type: 'bar',
-//         orientation: 'h'
-//     };
-    
-//     var layout = {
-//         title: 'Horizontal Bar Chart'
-//     };
-    
-//     var plotData = [trace];
-    
-//     Plotly.newPlot('myHorizontalBarChart', plotData, layout);
-// });
-
-</script>
-
+<script src="{% static 'js/results.js' %}"></script>
 {% endblock javascripts %}
