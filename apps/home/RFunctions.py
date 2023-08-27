@@ -10,7 +10,7 @@ def downloadRNA(projectID, dataType):
             
 
             # Definir el directorio de destino
-            rnadir <- paste(projectID, 'data/RNAseq', sep='/')
+            rnadir <- paste('DATA', projectID, dataType, 'data', sep='/')
             
             # Descargar RNAseq data 
             gdcRNADownload(project.id     = projectID, 
@@ -25,11 +25,14 @@ def downloadRNA(projectID, dataType):
     return True
 
 def analysisRNA(projectID, dataType):
-
+    
     r_script = f'''
         library(GDCRNATools)
         library(dplyr)
         library(tidyr)
+
+        ruta_completa <- "DATA/{projectID}/{dataType}/results"
+        dir.create(ruta_completa)
 
         getMetaMatrix <- function(projectID, dataType) {{
             metaMatrix.RNA <- gdcParseMetadata(project.id = projectID,
@@ -47,10 +50,10 @@ def analysisRNA(projectID, dataType):
         # Call the R function and save the result to a variable
         metaMatrix.RNA <- getMetaMatrix('{projectID}', '{dataType}')
 
-        rnadir <- paste('{projectID}', 'data/RNAseq', sep='/')
+        rnadir <- paste('DATA', '{projectID}', '{dataType}', 'data', sep='/')
         
         # Guardar el DataFrame en un archivo CSV
-        write.csv(metaMatrix.RNA, file = "{projectID}/metaMatrix_RNA.csv", row.names = TRUE)
+        write.csv(metaMatrix.RNA, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'metaMatrix_RNA.csv', sep = '/'), row.names = TRUE)
 
         ####### Merge RNAseq data #######
         rnaCounts <- gdcRNAMerge(metadata  = metaMatrix.RNA, 
@@ -58,11 +61,11 @@ def analysisRNA(projectID, dataType):
                             organized = FALSE, # if the data are in separate folders
                             data.type = '{dataType}')
         
-        write.csv(rnaCounts, file = "{projectID}/rnaCounts.csv", row.names = TRUE)
+        write.csv(rnaCounts, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'rnaCounts.csv', sep = '/'), row.names = TRUE)
 
         ####### Normalization of RNAseq data #######
         rnaExpr <- gdcVoomNormalization(counts = rnaCounts, filter = FALSE)
-        write.csv(rnaExpr, file = "{projectID}/RNA_EXPR.csv", row.names = TRUE)
+        write.csv(rnaExpr, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'RNA_EXPR.csv', sep = '/'), row.names = TRUE)
 
         result <- gdcDEAnalysis(counts = rnaCounts, 
                         group      = metaMatrix.RNA$sample_type, 
@@ -70,11 +73,11 @@ def analysisRNA(projectID, dataType):
                         method     = 'DESeq2',
                         filter=TRUE)
                     
-        write.csv(result, file = "{projectID}/DEGALL_CHOL.csv", row.names = TRUE)
+        write.csv(result, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'DEGALL_CHOL.csv', sep = '/'), row.names = TRUE)
 
         enrichOutput <- gdcEnrichAnalysis(gene = rownames(result), simplify = TRUE)
 
-        write.csv(enrichOutput, file = "{projectID}/ENRICH_ANALYSIS.csv", row.names = TRUE)
+        write.csv(enrichOutput, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'ENRICH_ANALYSIS.csv', sep = '/'), row.names = TRUE)
         '''
     robjects.r(r_script)
 

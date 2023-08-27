@@ -6,13 +6,31 @@
 {% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
-    <form action="create" method="POST">
-        {% csrf_token %}
-        <button type="submit">Descargar</button>
-    </form>
-
-    <form action="analysis" method="POST">
-        {% csrf_token %}
-        <button type="submit">Análisis</button>
-    </form>
+    <div class="row justify-content-center">
+        <div class="col" style="width: 18rem;"">
+            <div class="card">
+                <div class="card-header text-center">
+                        Select the project
+                </div>
+                <div class="card-body">
+                    <form action="analysis" method="POST" style="background-color: rgb(255, 255, 255);">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.projects.label_tag }}
+                            {{ form.projects }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.data_type.label_tag }}
+                            {{ form.data_type }}
+                        </div>
+                        <div class="mb-3 text-center">
+                            <button type="submit" class="btn btn-outline-primary">Analyze</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 {% endblock content %}

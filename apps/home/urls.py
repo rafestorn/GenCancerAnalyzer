@@ -8,8 +8,8 @@ urlpatterns = [
     # The home page
     path('', views.index, name='home'),
     path('create', views.download, name='download'),
-    path('analysis', views.analysis, name='analysis'),
-    path('results', views.results, name='results'),
+    path('analysis', views.index, name='analysis'),
+    path('results/<int:id>', views.analysisResults, name='results'),
     
     #API
     path('api/metadata', queries.MetadataCaseViewSet.as_view() ),

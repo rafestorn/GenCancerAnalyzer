@@ -5,20 +5,43 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 import requests
 from apps.home.RFunctions import downloadRNA, analysisRNA
-from apps.home.apiGDC import statusGDCApi
+from apps.home.apiGDC import statusGDCApi, getProjectsName
 import pandas as pd
 import plotly.graph_objs as go
-from plotly.subplots import make_subplots
 import numpy as np
 import plotly.express as px
 from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData
 import csv
 import os
+from .forms import AnalyzeForm
 
 def index(request):
-    """A view that displays the index page"""
-    html_template = loader.get_template("home/index.html")
-    return HttpResponse(html_template.render(dict(), request))
+    if request.method == 'POST':
+        form = AnalyzeForm(request.POST)
+        if form.is_valid():
+            project_id = form.cleaned_data['projects']
+            data_type = form.cleaned_data['data_type']
+            if StudyCase.objects.filter(project=project_id, data_type=data_type).exists():
+                return HttpResponse("Ya existe un estudio de caso con los mismos parámetros. Por favor, elija otro proyecto o tipo de datos.")
+            else:
+                if not os.path.exists('DATA/' + project_id +'/'+ data_type +'/data/'):
+                    downloadRNA(project_id, data_type)
+                if not os.path.exists('DATA/' + project_id +'/'+ data_type +'/results/'):
+                    analysisRNA(project_id, data_type)
+
+                sc = StudyCase(project=project_id, title='Caso de prueba', description='Hola buenas tardes', data_type=data_type)
+                sc.save()
+
+                process_metadata_csv('DATA/' + project_id +'/'+ data_type +'/results' + '/metaMatrix_RNA.csv', sc)
+                process_diff_expr_csv('DATA/' + project_id +'/'+ data_type +'/results' + '/DEGALL_CHOL.csv', sc)
+                process_enrich_csv('DATA/' + project_id +'/'+ data_type +'/results' + '/ENRICH_ANALYSIS.csv', sc)
+
+            return redirect('home')
+
+    else:
+        context = {'form': AnalyzeForm()}
+        html_template = loader.get_template("home/index.html")
+        return HttpResponse(html_template.render(context, request))
 
 def pages(request):
     context = {}
@@ -43,7 +66,6 @@ def pages(request):
         return HttpResponse(html_template.render(context, request))
 
 def download(request):
-    # Llamar a la función de R desde Python
     if statusGDCApi() == False:
         return HttpResponse("El servicio de GDC no está disponible en este momento. Intente más tarde.")
     else:   
@@ -53,23 +75,6 @@ def download(request):
         downloadRNA(project_id, data_type)
 
         return redirect('home')
-    
-def analysis(request):
-    project_id = "TCGA-CHOL"  # Reemplaza con el ID correcto de tu proyecto
-    data_type = "RNAseq"    # Reemplaza con el tipo de datos adecuado
-
-    sc = StudyCase(project=project_id, title='Caso de prueba número 2', description='Hola buenas tardes', data_type=data_type)
-    sc.save()
-    sc_id = sc.id
-
-    if not os.path.exists(project_id + '/metaMatrix_RNA.csv') or not os.path.exists(project_id + '/DEGALL_CHOL.csv') or not os.path.exists(project_id + '/ENRICH_ANALYSIS.csv'):
-        analysisRNA(project_id, data_type)
-
-    process_metadata_csv(project_id + '/metaMatrix_RNA.csv', sc)
-    process_diff_expr_csv(project_id + '/DEGALL_CHOL.csv', sc)
-    process_enrich_csv(project_id + '/ENRICH_ANALYSIS.csv', sc)
-
-    return redirect('home')
 
 def process_csv_file(file_path, model_class, field_mapping, additional_fields=None):
     with open(file_path, 'r') as csvfile:
@@ -222,3 +227,6 @@ def results(request):
     df = pd.read_csv('TCGA-CHOL/DEGALL_CHOL.csv')
     dict = df.to_dict('records')
     return render(request, 'home/results.html', {'volcano_plot': volcanoPlot, 'bar_plot': barPlot, 'corr_plot': corrPlot, 'data': dict, 'enrichData': enrichDict})
+
+def analysisResults(request, id):
+    return render(request, 'home/analysisResults.html', {'id': id})
