@@ -20,6 +20,8 @@ class StudyCaseViewSet(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('studyCase', openapi.IN_QUERY, description="Filter by studyCase id", type=openapi.TYPE_INTEGER),
+            openapi.Parameter('project', openapi.IN_QUERY, description="Filter by project", type=openapi.TYPE_STRING),
+            openapi.Parameter('data_type', openapi.IN_QUERY, description="Filter by data type", type=openapi.TYPE_STRING, enum=['RNAseq', 'miRNAs']),
             openapi.Parameter('maxItems', openapi.IN_QUERY, description="Max number of items in a query", type=openapi.TYPE_INTEGER, minimum=1),
             openapi.Parameter('page', openapi.IN_QUERY, description="Page", type=openapi.TYPE_INTEGER, minimum=1),
         ]
@@ -28,6 +30,8 @@ class StudyCaseViewSet(APIView):
         sc = request.query_params.get('studyCase')
         max_items = request.query_params.get('maxItems')
         page = request.query_params.get('page')
+        project = request.query_params.get('project')
+        data_type = request.query_params.get('data_type')
 
         if page is None:
             page = 1
@@ -36,6 +40,12 @@ class StudyCaseViewSet(APIView):
 
         if sc:
             queryset = queryset.filter(studyCase__id__icontains=sc)
+        
+        if project:
+            queryset = queryset.filter(project__icontains=project)
+        
+        if data_type:
+            queryset = queryset.filter(data_type__icontains=data_type)
 
         pag_queryset = paginate_queryset(queryset, page, max_items)
 
