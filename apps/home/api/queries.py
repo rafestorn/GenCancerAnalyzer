@@ -19,7 +19,7 @@ def paginate_queryset(queryset, page, max_items):
 class StudyCaseViewSet(APIView):
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter('studyCase', openapi.IN_QUERY, description="Filter by studyCase id", type=openapi.TYPE_INTEGER),
+            openapi.Parameter('id', openapi.IN_QUERY, description="Filter by id", type=openapi.TYPE_INTEGER),
             openapi.Parameter('project', openapi.IN_QUERY, description="Filter by project", type=openapi.TYPE_STRING),
             openapi.Parameter('data_type', openapi.IN_QUERY, description="Filter by data type", type=openapi.TYPE_STRING, enum=['RNAseq', 'miRNAs']),
             openapi.Parameter('maxItems', openapi.IN_QUERY, description="Max number of items in a query", type=openapi.TYPE_INTEGER, minimum=1),
@@ -27,7 +27,7 @@ class StudyCaseViewSet(APIView):
         ]
     )
     def get(self, request):
-        sc = request.query_params.get('studyCase')
+        sc = request.query_params.get('id')
         max_items = request.query_params.get('maxItems')
         page = request.query_params.get('page')
         project = request.query_params.get('project')
@@ -39,7 +39,7 @@ class StudyCaseViewSet(APIView):
         queryset = StudyCase.objects.all()
 
         if sc:
-            queryset = queryset.filter(studyCase__id__icontains=sc)
+            queryset = queryset.filter(id__icontains=sc)
         
         if project:
             queryset = queryset.filter(project__icontains=project)
@@ -58,7 +58,7 @@ class StudyCaseViewSet(APIView):
             "next_page": request.build_absolute_uri() + f"&page={int(page)+1}" if max_items is not None and int(page)*int(max_items) < queryset.count() else None,
             "results": serializer.data,
         }
-        return Response(serializer.data)
+        return Response(response)
 
 class MetadataCaseViewSet(APIView):
     @swagger_auto_schema(
