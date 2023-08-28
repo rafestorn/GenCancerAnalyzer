@@ -7,7 +7,7 @@
 
 {% block content %}
     <div class="row justify-content-center">
-        <div class="col" style="width: 18rem;"">
+        <div class="col-md-4 mb-4">
             <div class="card">
                 <div class="card-header text-center">
                         Select the project
@@ -31,6 +31,42 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    Selected Project Information
+                </div>
+                <div class="card-body" id="projectInfoContainer"></div>
+            </div>
+        </div>
     </div>
     
 {% endblock content %}
+
+{% block javascripts %}
+<script>
+    var selectProjectId = document.getElementById('id_projects');
+
+    selectProjectId.addEventListener('change', function() {
+        var selectedProjectId = selectProjectId.value;
+
+        axios.get('https://api.gdc.cancer.gov/projects/' + selectedProjectId)
+        .then(respones => {
+            projectInfo = respones.data.data;
+            var html = `
+                <p><strong>Name:</strong> ${projectInfo.name}</p>
+                <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+            `;
+            projectInfoContainer.innerHTML = html;
+        })
+        .catch(error => {
+            var html = `
+                <p><strong>Unable to get project info</strong></p>
+            `
+        })
+    })
+</script>
+{% endblock javascripts %}
