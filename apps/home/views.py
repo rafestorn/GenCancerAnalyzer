@@ -22,11 +22,14 @@ def index(request):
             project_id = form.cleaned_data['projects']
             data_type = form.cleaned_data['data_type']
             if StudyCase.objects.filter(project=project_id, data_type=data_type).exists():
-                return HttpResponse("Ya existe un estudio de caso con los mismos parámetros. Por favor, elija otro proyecto o tipo de datos.")
+                sc = StudyCase.objects.get(project=project_id, data_type=data_type)
+                print(sc.id)
+                return redirect('metadata', id = StudyCase.objects.get(project=project_id, data_type=data_type).id)
             else:
-                if not os.path.exists('DATA/' + project_id +'/'+ data_type +'/data/'):
+                base_dir = 'DATA/' + project_id +'/'+ data_type
+                if not os.path.exists(base_dir +'/data'):
                     downloadRNA(project_id, data_type)
-                if not os.path.exists('DATA/' + project_id +'/'+ data_type +'/results/'):
+                if not os.path.exists(base_dir + '/results'):
                     analysisRNA(project_id, data_type)
 
                 sc = StudyCase(project=project_id, title='Caso de prueba', description='Hola buenas tardes', data_type=data_type)
@@ -228,5 +231,8 @@ def results(request):
     dict = df.to_dict('records')
     return render(request, 'home/results.html', {'volcano_plot': volcanoPlot, 'bar_plot': barPlot, 'corr_plot': corrPlot, 'data': dict, 'enrichData': enrichDict})
 
-def analysisResults(request, id):
-    return render(request, 'home/analysisResults.html', {'id': id})
+def metaData(request, id):
+    return render(request, 'home/results-metadata.html', {'id': id})
+
+def diffExpr(request, id):
+    return render(request, 'home/results-difexpr.html', {'id': id})
