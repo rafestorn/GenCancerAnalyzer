@@ -1,0 +1,157 @@
+{% extends 'layouts/base.html' %}
+
+{% load static %}
+
+{% block title %} Metadata {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+  
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+{% endblock stylesheets %}
+
+{% block content %} 
+
+{% include 'includes/studyCaseInfoBlock.html' %}
+
+{% include 'includes/resultsBtn.html' %}
+
+<div class="accordion" id="accordionExample">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Datatable
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <table id="metadataDatatable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>file_name</th>
+                            <th>file_id</th>
+                            <th>patient</th>
+                            <th>sample</th>
+                            <th>submitter_id</th>
+                            <th>entity_submitter_id</th>
+                            <th>sample_type</th>
+                            <th>gender</th>
+                            <th>age_at_diagnosis</th>
+                            <th>tumor_stage</th>
+                            <th>tumor_grade</th>
+                            <th>days_to_death</th>
+                            <th>days_to_last_follow_up</th>
+                            <th>vital_status</th>
+                            <th>project_id</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            Accordion Item #2
+        </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <p>item</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+{% block javascripts %}
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    axios.get('/api/metadata?studyCase=' + {{id}})
+    .then(response => {
+        results = response.data.results;
+
+        $(document).ready(function() {
+        const dataTable = $('#metadataDatatable').DataTable({
+            scrollX: true,
+            data: results,
+            columns: [
+            { data: 'case_id' },
+            { data: 'file_name' },
+            { data: 'file_id' },
+            { data: 'patient'},
+            { data: 'sample'},
+            { data: 'submitter_id'},
+            { data: 'entity_submitter_id'},
+            { data: 'sample_type'},
+            { data: 'gender'},
+            { data: 'age_at_diagnosis'},
+            { data: 'tumor_stage'},
+            { data: 'tumor_grade'},
+            { data: 'days_to_death'},
+            { data: 'days_to_last_follow_up'},
+            { data: 'vital_status'},
+            { data: 'project_id'},
+            ]
+        });
+        });
+    }).catch(error => {
+        console.log(error)
+        })
+
+    axios.get('/api/studyCase?id=' + {{id}})
+    .then(respones => {
+        studyCase = respones.data.results[0];
+        var html = `
+            <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
+            `
+        projectHeader.innerHTML = html;
+        axios.get('https://api.gdc.cancer.gov/projects/' + studyCase.project)
+        .then(respones => {
+            projectInfo = respones.data.data;
+            var html = `
+                <p><strong>Name:</strong> ${projectInfo.name}</p>
+                <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+            `;
+            projectInfoContainer.innerHTML = html;
+        }).catch(error => {
+            var html = `
+            <p><strong>Unable to get project info</strong></p>
+            `;
+            projectInfoContainer.innerHTML = html;
+        })
+    })
+    .catch(error => {
+        var html = `
+            <p><strong>Unable to get project info</strong></p>
+        `
+    })
+})
+</script>
+<script>
+    var currentUrl = window.location.pathname;
+
+    var btnMetadata = document.getElementById('btn-metadata');
+
+    function changeButtonColor(button, targetUrl) {
+        if (currentUrl === targetUrl) {
+            button.style.backgroundColor = 'rgb(82, 53, 92)';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        changeButtonColor(btnMetadata, '/results/{{id}}/metadata');
+    })
+
+</script>
+{% endblock javascripts %}

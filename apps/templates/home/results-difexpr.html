@@ -1,0 +1,287 @@
+{% extends 'layouts/base.html' %}
+
+{% load static %}
+
+{% block title %} Differential Expression Resuslts {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+  
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+{% endblock stylesheets %}
+
+{% block content %} 
+{% include 'includes/studyCaseInfoBlock.html' %}
+{% include 'includes/resultsBtn.html'%}
+
+<div class="accordion" id="accordionExample">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Datatable
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <table id="diffExprDatatable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Identifier</th>
+                            <th>Symbol</th>
+                            <th>Group</th>
+                            <th>BaseMean</th>
+                            <th>LogFC</th>
+                            <th>LfcSE</th>
+                            <th>Stat</th>
+                            <th>PValue</th>
+                            <th>FDR</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            Volcano Plot
+        </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                {%include "includes/volcanoPlot.html"%}
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                Accordion Item #3
+            </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        axios.get('/api/studyCase?id=' + {{id}})
+        .then(response => {
+            studyCase = response.data.results[0];
+            var html = `
+                <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
+                `
+            projectHeader.innerHTML = html;
+            axios.get('https://api.gdc.cancer.gov/projects/' + studyCase.project)
+            .then(response => {
+                projectInfo = response.data.data;
+                var html = `
+                    <p><strong>Name:</strong> ${projectInfo.name}</p>
+                    <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                    <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                    <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                    <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+                `;
+                projectInfoContainer.innerHTML = html;
+            }).catch(error => {
+                var html = `
+                <p><strong>Unable to get project info</strong></p>
+                `;
+                projectInfoContainer.innerHTML = html;
+            })
+        })
+        .catch(error => {
+            var html = `
+                <p><strong>Unable to get project info</strong></p>
+            `
+        })
+    })
+</script>
+
+<script>
+    const btnVolcanoPlot = document.getElementById('btnVolcanoPlot');
+    const btnConfigureVolcanoPlot = document.getElementById('btnConfigureVolcanoPlot'); 
+    const closeButtonVolcanoPlot = document.getElementById('closePopupVolcanoPlot');
+    const popupVolcanoPlot = document.getElementById("popupVolcanoPlot");
+    const pvalueInput = document.getElementById("pvalue-threshold");
+    const logfcInput = document.getElementById("logfc-threshold");
+    const threshold_pvalue = 0.05;
+    const threshold_logfc = 2;
+
+    const volcanoPlotlayout = {
+    title: 'Volcano Plot',
+    xaxis: {
+        title: 'Fold Change (logFC)',
+        showline: true,
+        showgrid: false
+    },
+    yaxis: {
+        title: '-log10(FDR corrected - PValue)',
+        showline: true,
+        showgrid: false
+    },
+    legend: {
+        orientation: 'h',
+        xanchor: 'center',
+        x: 0.5,
+        y: 2,
+    },
+    shapes: [
+        {
+        type: 'line',
+        x0: -threshold_logfc,
+        y0: 0,
+        x1: -threshold_logfc,
+        y1: 30,
+        line: {
+            color: 'gray',
+            dash: 'dash'
+        }
+        },
+        {
+        type: 'line',
+        x0: threshold_logfc,
+        y0: 0,
+        x1: threshold_logfc,
+        y1: 30,
+        line: {
+            color: 'gray',
+            dash: 'dash'
+        }
+        },
+        {
+        type: 'line',
+        x0: -10,
+        y0: -1 * -threshold_pvalue,
+        x1: 10,
+        y1: -1 * -threshold_pvalue,
+        line: {
+            color: 'gray',
+            dash: 'dash'
+        }
+        }
+    ]
+    };
+
+    function createTrace(data, color, nameTrace) {
+    return {
+        x: data.map(row => row.logFC),
+        y: data.map(row => -1 * Math.log10(row.PValue)),
+        mode: 'markers',
+        text: data.map(row => row.symbol),
+        marker: {
+        color: color
+        },
+        type: 'scatter',
+        name: nameTrace,
+    };
+    }
+
+    function updateVolcanoPlot(data, pvalueThresholdinput, logfcThresholdinput) {
+    const significant_genes = data.filter(row => 
+        (-1 * Math.log10(row.PValue) > pvalueThresholdinput) && 
+        (Math.abs(row.logFC) > logfcThresholdinput)
+    );
+    
+    non_singnificant_genes = data.filter(row => 
+        (-1 * Math.log10(row.PValue) <= pvalueThresholdinput) || 
+        (Math.abs(row.logFC) <= logfcThresholdinput)
+    );
+
+    const trace_non_significant = createTrace(non_singnificant_genes, 'blue', 'No significant genes');
+    const trace_significant = createTrace(significant_genes,'red', 'Significant genes');
+
+    volcanoPlotlayout.shapes[0].x0 = -logfcThresholdinput;
+    volcanoPlotlayout.shapes[0].x1 = -logfcThresholdinput;
+    volcanoPlotlayout.shapes[1].x1 = logfcThresholdinput;
+    volcanoPlotlayout.shapes[1].x0 = logfcThresholdinput;
+    volcanoPlotlayout.shapes[2].y1 = -1 * -pvalueThresholdinput;
+    volcanoPlotlayout.shapes[2].y0 = -1 * -pvalueThresholdinput;
+
+    const plotDiv = 'volcanoPlot';
+    Plotly.purge(plotDiv);
+    Plotly.newPlot(plotDiv, [trace_non_significant, trace_significant], volcanoPlotlayout, {responsive: true});
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+
+    pvalueInput.value = threshold_pvalue;
+    logfcInput.value = threshold_logfc;
+
+    
+    axios.get('/api/differentialExpression?studyCase={{id}}')
+        .then(response => {
+        
+        results = response.data.results;
+
+        $(document).ready(function() {
+            const dataTable = $('#diffExprDatatable').DataTable({
+            scrollX: true,
+            data: results,
+            columns: [
+                { data: 'gene_id' },
+                { data: 'symbol' },
+                { data: 'group' },
+                { data: 'baseMean'},
+                { data: 'logFC'},
+                { data: 'lfcSE'},
+                { data: 'stat'},
+                { data: 'PValue'},
+                { data: 'FDR'}
+            ]
+            });
+        });
+
+        results.sort((a, b) => a.PValue - b.PValue);
+        updateVolcanoPlot(results, threshold_pvalue, threshold_logfc);
+
+        btnVolcanoPlot.addEventListener("click", function() {
+            updateVolcanoPlot(results, parseFloat(pvalueInput.value), parseFloat(logfcInput.value));
+            popupVolcanoPlot.classList.remove("show");
+            popupVolcanoPlot.style.display = "none";
+        });
+
+        btnConfigureVolcanoPlot.addEventListener("click", function() {
+            popupVolcanoPlot.classList.add("show");
+            popupVolcanoPlot.style.display = "block";
+        });
+
+        closeButtonVolcanoPlot.addEventListener("click", function() {
+            popupVolcanoPlot.classList.remove("show");
+            popupVolcanoPlot.style.display = "none";
+        });
+
+        })
+        .catch(function(error) {
+        console.error('Error al obtener los datos:', error);
+        });
+    });
+
+</script>
+<script>
+    var currentUrl = window.location.pathname;
+
+    var btnDiffExpr = document.getElementById('btn-diffExpr');
+
+    function changeButtonColor(button, targetUrl) {
+        if (currentUrl === targetUrl) {
+            button.style.backgroundColor = 'rgb(82, 53, 92)';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        changeButtonColor(btnDiffExpr, '/results/{{id}}/diffExpr');
+    })
+
+</script>
+{% endblock javascripts %}

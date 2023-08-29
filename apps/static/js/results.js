@@ -96,17 +96,15 @@ function updateVolcanoPlot(data, pvalueThresholdinput, logfcThresholdinput) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  const dataTable = $('#dataTable').DataTable({
-    scrollX: true,
-  });
 
   pvalueInput.value = threshold_logfc;
   logfcInput.value = threshold_pvalue;
 
   
-  axios.get('api/differentialExpression?studyCase=13')
+  axios.get('/api/differentialExpression?studyCase=13')
     .then(response => {
-      const results = response.data.results;
+      
+      results = response.data.results;
 
       $(document).ready(function() {
         const dataTable = $('#miTabla').DataTable({

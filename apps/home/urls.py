@@ -9,7 +9,8 @@ urlpatterns = [
     path('', views.index, name='home'),
     path('create', views.download, name='download'),
     path('analysis', views.index, name='analysis'),
-    path('results/<int:id>', views.analysisResults, name='results'),
+    path('results/<int:id>/metadata', views.metaData, name='metadata'),
+    path('results/<int:id>/diffExpr', views.diffExpr, name='diffExpr'),
     
     #API
     path('api/metadata', queries.MetadataCaseViewSet.as_view() ),
