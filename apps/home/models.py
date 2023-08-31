@@ -65,3 +65,11 @@ class EnrichData(models.Model):
 
     def get_gene_symbols_list(self):
         return self.gene_symbols.split('/')
+    
+class RNAExpresion(models.Model):
+    studyCase = models.ForeignKey(StudyCase, on_delete=models.CASCADE)
+    gene_id = models.CharField(max_length=50)
+    data = models.JSONField()
+
+    class Meta:
+        db_table = 'rna_expression'
