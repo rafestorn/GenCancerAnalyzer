@@ -17,14 +17,14 @@
 {% include 'includes/studyCaseInfoBlock.html' %}
 {% include 'includes/resultsBtn.html'%}
 
-<div class="accordion" id="accordionExample">
+<div class="accordion" id="accordionResults">
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                 Datatable
             </button>
         </h2>
-        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionResults">
             <div class="accordion-body">
                 <table id="diffExprDatatable" class="table table-bordered">
                     <thead>
@@ -51,7 +51,7 @@
             Volcano Plot
         </button>
         </h2>
-        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionResults">
             <div class="accordion-body">
                 {%include "includes/volcanoPlot.html"%}
             </div>
@@ -60,12 +60,12 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingThree">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                Accordion Item #3
+                Bar chart
             </button>
         </h2>
-        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionResults">
             <div class="accordion-body">
-                <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                <div id="bar-chart"> </div>
             </div>
         </div>
     </div>
@@ -188,29 +188,99 @@
     }
 
     function updateVolcanoPlot(data, pvalueThresholdinput, logfcThresholdinput) {
-    const significant_genes = data.filter(row => 
-        (-1 * Math.log10(row.PValue) > pvalueThresholdinput) && 
-        (Math.abs(row.logFC) > logfcThresholdinput)
-    );
+        const significant_genes = data.filter(row => 
+            (-1 * Math.log10(row.PValue) > pvalueThresholdinput) && 
+            (Math.abs(row.logFC) > logfcThresholdinput)
+        );
+        
+        non_singnificant_genes = data.filter(row => 
+            (-1 * Math.log10(row.PValue) <= pvalueThresholdinput) || 
+            (Math.abs(row.logFC) <= logfcThresholdinput)
+        );
+
+        const trace_non_significant = createTrace(non_singnificant_genes, 'blue', 'No significant genes');
+        const trace_significant = createTrace(significant_genes,'red', 'Significant genes');
+
+        volcanoPlotlayout.shapes[0].x0 = -logfcThresholdinput;
+        volcanoPlotlayout.shapes[0].x1 = -logfcThresholdinput;
+        volcanoPlotlayout.shapes[1].x1 = logfcThresholdinput;
+        volcanoPlotlayout.shapes[1].x0 = logfcThresholdinput;
+        volcanoPlotlayout.shapes[2].y1 = -1 * -pvalueThresholdinput;
+        volcanoPlotlayout.shapes[2].y0 = -1 * -pvalueThresholdinput;
+
+        const plotDiv = 'volcanoPlot';
+        Plotly.purge(plotDiv);
+        Plotly.newPlot(plotDiv, [trace_non_significant, trace_significant], volcanoPlotlayout, {responsive: true});
+    }
+
+    function preparedtaBarChart(data){
+        const counts = new Map();
+
+        data.forEach(entry => {
+            const group = entry.group;
+            const regulation = entry.logFC > 0 ? 'upregulated' : 'downregulated';
+
+            // Generate a key for the map
+            const key = `${group}-${regulation}`;
+
+            if (!counts.has(key)) {
+                counts.set(key, 1);
+            } else {
+                counts.set(key, counts.get(key) + 1);
+            }
+        });
+
+        // Convert map to an array of objects
+        const groupedData = [...counts].map(([key, count]) => {
+            const [group, regulation] = key.split('-');
+            return { group, regulation, count };
+        });
+
+        return groupedData
+    }
+
+    function updateBarChart(data){
     
-    non_singnificant_genes = data.filter(row => 
-        (-1 * Math.log10(row.PValue) <= pvalueThresholdinput) || 
-        (Math.abs(row.logFC) <= logfcThresholdinput)
-    );
+        groupedData = preparedtaBarChart(data)
 
-    const trace_non_significant = createTrace(non_singnificant_genes, 'blue', 'No significant genes');
-    const trace_significant = createTrace(significant_genes,'red', 'Significant genes');
+        const uniqueGroups = [...new Set(groupedData.map(entry => entry.group))];
 
-    volcanoPlotlayout.shapes[0].x0 = -logfcThresholdinput;
-    volcanoPlotlayout.shapes[0].x1 = -logfcThresholdinput;
-    volcanoPlotlayout.shapes[1].x1 = logfcThresholdinput;
-    volcanoPlotlayout.shapes[1].x0 = logfcThresholdinput;
-    volcanoPlotlayout.shapes[2].y1 = -1 * -pvalueThresholdinput;
-    volcanoPlotlayout.shapes[2].y0 = -1 * -pvalueThresholdinput;
+        const xValues = [];
+        const yValuesUpregulated = [];
+        const yValuesDownregulated = [];
 
-    const plotDiv = 'volcanoPlot';
-    Plotly.purge(plotDiv);
-    Plotly.newPlot(plotDiv, [trace_non_significant, trace_significant], volcanoPlotlayout, {responsive: true});
+        uniqueGroups.forEach(group => {
+            const upregulatedEntry = groupedData.find(entry => entry.group === group && entry.regulation === 'upregulated');
+            const downregulatedEntry = groupedData.find(entry => entry.group === group && entry.regulation === 'downregulated');
+
+            xValues.push(group);
+            yValuesUpregulated.push(upregulatedEntry ? upregulatedEntry.count : 0);
+            yValuesDownregulated.push(downregulatedEntry ? downregulatedEntry.count : 0);
+        });
+
+        const traceUpregulated = {
+            x: xValues,
+            y: yValuesUpregulated,
+            name: 'Upregulated',
+            type: 'bar'
+        };
+
+        const traceDownregulated = {
+            x: xValues,
+            y: yValuesDownregulated,
+            name: 'Downregulated',
+            type: 'bar'
+        };
+
+        const dataTraces = [traceUpregulated, traceDownregulated];
+
+        const layout = {
+            yaxis: { title: 'Nº of differentially expressed genes' },
+        };
+
+        Plotly.newPlot('bar-chart', dataTraces, layout, {responsive: true});
+        Plotly.Plots.resize('bar-chart')
+
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -221,50 +291,61 @@
     
     axios.get('/api/differentialExpression?studyCase={{id}}')
         .then(response => {
-        
-        results = response.data.results;
-
-        $(document).ready(function() {
-            const dataTable = $('#diffExprDatatable').DataTable({
-            scrollX: true,
-            data: results,
-            columns: [
-                { data: 'gene_id' },
-                { data: 'symbol' },
-                { data: 'group' },
-                { data: 'baseMean'},
-                { data: 'logFC'},
-                { data: 'lfcSE'},
-                { data: 'stat'},
-                { data: 'PValue'},
-                { data: 'FDR'}
-            ]
+            results = response.data.results;
+            $(document).ready(function() {
+                const dataTable = $('#diffExprDatatable').DataTable({
+                scrollX: true,
+                data: results,
+                columns: [
+                    { data: 'gene_id' },
+                    { data: 'symbol' },
+                    { data: 'group' },
+                    { data: 'baseMean'},
+                    { data: 'logFC'},
+                    { data: 'lfcSE'},
+                    { data: 'stat'},
+                    { data: 'PValue'},
+                    { data: 'FDR'}
+                ]
+                });
             });
-        });
+            results.sort((a, b) => a.PValue - b.PValue);
+            updateVolcanoPlot(results, threshold_pvalue, threshold_logfc);
+            updateBarChart(results)
 
-        results.sort((a, b) => a.PValue - b.PValue);
-        updateVolcanoPlot(results, threshold_pvalue, threshold_logfc);
+            btnVolcanoPlot.addEventListener("click", function() {
+                updateVolcanoPlot(results, parseFloat(pvalueInput.value), parseFloat(logfcInput.value));
+                popupVolcanoPlot.classList.remove("show");
+                popupVolcanoPlot.style.display = "none";
+            });
 
-        btnVolcanoPlot.addEventListener("click", function() {
-            updateVolcanoPlot(results, parseFloat(pvalueInput.value), parseFloat(logfcInput.value));
-            popupVolcanoPlot.classList.remove("show");
-            popupVolcanoPlot.style.display = "none";
-        });
+            btnConfigureVolcanoPlot.addEventListener("click", function() {
+                popupVolcanoPlot.classList.add("show");
+                popupVolcanoPlot.style.display = "block";
+            });
 
-        btnConfigureVolcanoPlot.addEventListener("click", function() {
-            popupVolcanoPlot.classList.add("show");
-            popupVolcanoPlot.style.display = "block";
-        });
+            closeButtonVolcanoPlot.addEventListener("click", function() {
+                popupVolcanoPlot.classList.remove("show");
+                popupVolcanoPlot.style.display = "none";
+            });
 
-        closeButtonVolcanoPlot.addEventListener("click", function() {
-            popupVolcanoPlot.classList.remove("show");
-            popupVolcanoPlot.style.display = "none";
+            $('#accordionResults').on('shown.bs.collapse', function (event) {
+                const targetId = event.target.id;
+                
+                // Redimensionar el gráfico si es el gráfico de barra
+                if (targetId === 'collapseThree') {
+                    Plotly.Plots.resize('bar-chart');
+                }
+                
+                // Redimensionar el gráfico si es el gráfico de volcanoPlot
+                if (targetId === 'collapseTwo') {
+                    Plotly.Plots.resize('volcanoPlot');
+                }
+            });
+        }).catch(function(error) {
+            console.error('Error al obtener los datos:', error);
         });
-
-        })
-        .catch(function(error) {
-        console.error('Error al obtener los datos:', error);
-        });
+        
     });
 
 </script>
@@ -284,4 +365,5 @@
     })
 
 </script>
+
 {% endblock javascripts %}
