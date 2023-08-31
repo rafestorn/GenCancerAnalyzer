@@ -10,7 +10,7 @@ import pandas as pd
 import plotly.graph_objs as go
 import numpy as np
 import plotly.express as px
-from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData
+from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion
 import csv
 import os
 from .forms import AnalyzeForm
@@ -35,9 +35,11 @@ def index(request):
                 sc = StudyCase(project=project_id, title='Caso de prueba', description='Hola buenas tardes', data_type=data_type)
                 sc.save()
 
-                process_metadata_csv('DATA/' + project_id +'/'+ data_type +'/results' + '/metaMatrix_RNA.csv', sc)
-                process_diff_expr_csv('DATA/' + project_id +'/'+ data_type +'/results' + '/DEGALL_CHOL.csv', sc)
-                process_enrich_csv('DATA/' + project_id +'/'+ data_type +'/results' + '/ENRICH_ANALYSIS.csv', sc)
+                process_rna_expr_csv('DATA/' + project_id +'/'+ data_type+'/results/RNA_EXPR.csv', sc)
+                process_metadata_csv('DATA/' + project_id +'/'+ data_type +'/results/metaMatrix_RNA.csv', sc)
+                process_diff_expr_csv('DATA/' + project_id +'/'+ data_type +'/results/DEGALL_CHOL.csv', sc)
+                process_enrich_csv('DATA/' + project_id +'/'+ data_type +'/results/ENRICH_ANALYSIS.csv', sc)
+                
 
             return redirect('home')
 
@@ -148,6 +150,17 @@ def process_enrich_csv(file_path, sc):
     additional_fields = {'studyCase': sc}
     process_csv_file(file_path, EnrichData, field_mapping, additional_fields)
 
+def process_rna_expr_csv(file_path, sc):
+    with open(file_path, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            data = {}
+            gene_id = row[""]
+            for key, value in row.items():
+                if key != "":
+                    data[key] = float(value)
+            RNAExpresion(studyCase=sc, gene_id=gene_id, data=data).save()
+    
 
 def volcanoPlotDE():
     df = pd.read_csv('TCGA-CHOL/DEGALL_CHOL.csv')
