@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.home.models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData
+from apps.home.models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion
 
 class StudyCaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,3 +20,9 @@ class EnrichDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnrichData
         exclude = ['gene_ids','gene_symbols']
+
+class RNAExpressionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RNAExpresion
+        fields = '__all__'
+
