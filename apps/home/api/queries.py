@@ -184,6 +184,7 @@ class RNAexprCaseViewSet(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('studyCase', openapi.IN_QUERY, description="Filtro por studyCase", type=openapi.TYPE_INTEGER),
+            openapi.Parameter('genes_ids', openapi.IN_QUERY, description="Comma-separated gene IDs to filter", type=openapi.TYPE_STRING),
             openapi.Parameter('maxItems', openapi.IN_QUERY, description="Max number of items in a query", type=openapi.TYPE_INTEGER, minimum=1),
             openapi.Parameter('page', openapi.IN_QUERY, description="Page", type=openapi.TYPE_INTEGER, minimum=1),
         ]
@@ -192,6 +193,7 @@ class RNAexprCaseViewSet(APIView):
         sc = request.query_params.get('studyCase')
         max_items = request.query_params.get('maxItems')
         page = request.query_params.get('page')
+        genes_ids = request.query_params.get('genes_ids')
 
         if page is None:
             page = 1
@@ -200,6 +202,10 @@ class RNAexprCaseViewSet(APIView):
         
         if sc:
              queryset = queryset.filter(studyCase__id__icontains=sc)
+        
+        if genes_ids:
+            gene_ids_list = genes_ids.split(',')
+            queryset = queryset.filter(gene_id__in=gene_ids_list)
 
         pag_queryset = paginate_queryset(queryset, page, max_items)
 
