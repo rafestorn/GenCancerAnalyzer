@@ -11,11 +11,14 @@ def statusGDCApi():
         return False
     
 def getProjects():
-    params = {
-    "size": "100",
-    }
-    result = requests.get(projects_endpt, params = params).json()
-    return result
+    try:
+        params = {
+        "size": "100",
+        }
+        result = requests.get(projects_endpt, params = params).json()
+        return result
+    except:
+        return None
     
 def getProjectsName():
     result = getProjects()
