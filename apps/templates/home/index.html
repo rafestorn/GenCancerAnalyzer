@@ -3,7 +3,10 @@
 {% block title %} Dashboard {% endblock title %}
 
 <!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endblock stylesheets %}
 
 {% block content %}
     <div class="row justify-content-center">
@@ -25,7 +28,7 @@
                             {{ form.data_type }}
                         </div>
                         <div class="mb-3 text-center">
-                            <button type="submit" class="btn btn-outline-primary">Analyze</button>
+                            <button type="submit" class="btn btn-outline-primary" id="btnAnalyze">Analyze</button>
                         </div>
                     </form>
                 </div>
@@ -45,28 +48,41 @@
 
 {% block javascripts %}
 <script>
-    var selectProjectId = document.getElementById('id_projects');
+    const selectProjectId = document.getElementById('id_projects');
+    const btnAnalyze = document.getElementById('btnAnalyze');
 
-    selectProjectId.addEventListener('change', function() {
-        var selectedProjectId = selectProjectId.value;
-
-        axios.get('https://api.gdc.cancer.gov/projects/' + selectedProjectId)
-        .then(respones => {
-            projectInfo = respones.data.data;
-            var html = `
-                <p><strong>Name:</strong> ${projectInfo.name}</p>
-                <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
-                <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
-                <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
-                <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
-            `;
-            projectInfoContainer.innerHTML = html;
-        })
-        .catch(error => {
+    document.addEventListener('DOMContentLoaded', function() {
+        if (selectProjectId.disabled) {
+            btnAnalyze.disabled = true;
             var html = `
                 <p><strong>Unable to get project info</strong></p>
+                <p>Try again later</p>
             `
+            projectInfoContainer.innerHTML = html;
+        }
+        $('#id_projects').select2();
+        $('#id_projects').on('change', function() {
+            var selectedProjectId = selectProjectId.value;
+
+            axios.get('https://api.gdc.cancer.gov/projects/' + selectedProjectId)
+            .then(respones => {
+                projectInfo = respones.data.data;
+                var html = `
+                    <p><strong>Name:</strong> ${projectInfo.name}</p>
+                    <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                    <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                    <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                    <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+                `;
+                projectInfoContainer.innerHTML = html;
+            })
+            .catch(error => {
+                var html = `
+                    <p><strong>Unable to get project info</strong></p>
+                `
+            })
         })
     })
+
 </script>
 {% endblock javascripts %}
