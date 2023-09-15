@@ -39,7 +39,9 @@
                 <div class="card-header text-center">
                     Selected Project Information
                 </div>
-                <div class="card-body" id="projectInfoContainer"></div>
+                <div class="card-body" id="projectInfoContainer">
+                    <div class="info" id="isAnalyzed"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -50,6 +52,7 @@
 <script>
     const selectProjectId = document.getElementById('id_projects');
     const btnAnalyze = document.getElementById('btnAnalyze');
+    const selectDatatype = document.getElementById('id_data_type');
 
     document.addEventListener('DOMContentLoaded', function() {
         if (selectProjectId.disabled) {
@@ -63,6 +66,7 @@
         $('#id_projects').select2();
         $('#id_projects').on('change', function() {
             var selectedProjectId = selectProjectId.value;
+            var selectedDataType = selectDatatype.value;
 
             axios.get('https://api.gdc.cancer.gov/projects/' + selectedProjectId)
             .then(respones => {
@@ -74,7 +78,21 @@
                     <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
                     <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
                 `;
-                projectInfoContainer.innerHTML = html;
+                axios.get('/api/studyCase?project=' + selectedProjectId,'&data_type='+selectedDataType) 
+                .then(response2 => {
+                    if (response2.data.total_items == 0)  {
+                        var html2 = `
+                        <p style="color: red;"><strong>Not analyzed</strong></p>
+                        `;
+                    } else {
+                        var html2 = `
+                        <p style="color: green;"><strong>Already analyzed</strong></p>
+                        `;
+                    }
+                    projectInfoContainer.innerHTML = html+html2;
+                }).catch(error => {
+                    console.log(error)
+                })
             })
             .catch(error => {
                 var html = `
