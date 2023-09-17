@@ -15,6 +15,8 @@
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/7.1.0/simple-statistics.min.js"></script>
+
 
 {% endblock stylesheets %}
 
@@ -30,7 +32,7 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                Datatable
+                Metadata Datatable
             </button>
         </h2>
         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
@@ -64,12 +66,22 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingTwo">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-            Accordion Item #2
+            Metadata Summary
         </button>
         </h2>
         <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
             <div class="accordion-body">
-                <p>item</p>
+                <div class="row mb-3">
+                    <p>An statistical summary of metadata information. For every numeric atribute describes the mean, min value, max value and quantiles ignoring the null fields.</p>
+                <div class="row">
+                    <div class="col-md-4" id="age_at_diagnosis_div">
+                    </div>
+                    <div class="col-md-4" id="days_to_death_div">
+                    </div>
+                    <div class="col-md-4" id="days_to_last_follow_up_div">
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
     </div>
@@ -78,6 +90,39 @@
 {% endblock content %}
 {% block javascripts %}
 <script>
+
+function getStatistics(data, field){
+    var list = results.filter(entry => entry[field]!=null).map(entry => entry[field])
+    var media = ss.mean(list)
+    var min = ss.min(list)
+    var max = ss.max(list)
+    var cuartil25 = ss.quantile(list, 0.25);
+    var cuartil50 = ss.quantile(list, 0.50); // Equivalente a la mediana
+    var cuartil75 = ss.quantile(list, 0.75);
+    var html = `
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Field: ${field}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p class="mb-2">Mean: ${media}</p>
+                    <p class="mb-2">Min: ${min}</p>
+                    <p class="mb-2">Max: ${max}</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-2">1st Qu.: ${cuartil25}</p>
+                    <p class="mb-2">Median: ${cuartil50}</p>
+                    <p class="mb-2">3rd Qu.: ${cuartil75}</p>
+                </div>
+                <!-- Puedes agregar más columnas y estilos según tus necesidades -->
+            </div>
+        </div>
+    </div>
+    `
+    $('#'+field+'_div').html(html)
+}
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -113,6 +158,11 @@ document.addEventListener('DOMContentLoaded', function() {
             ]
         });
         });
+        getStatistics(results, 'age_at_diagnosis')
+        getStatistics(results, 'days_to_death')
+        getStatistics(results, 'days_to_last_follow_up')
+
+
     }).catch(error => {
         console.log(error)
     })
