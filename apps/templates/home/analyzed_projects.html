@@ -1,0 +1,59 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Analyzed Projects {% endblock title %}
+
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+<form method="get" action="/analyzedProjects" id="filter-form">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="project-select">Project:</label>
+                <select class="form-control" id="project-select" name="project">
+                    <option value="">All</option>
+                    {% for item in projects %}
+                    <option value="{{ item }}">{{ item }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="datatype-select">Data Type:</label>
+                <select class="form-control" id="datatype-select" name="data_type">
+                    <option value="">All</option>
+                    <option value="RNAseq">RNAseq</option>
+                    <option value="miRNAs">miRNAs</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 20px;">Filtrar</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+  
+<div class="row">
+    {% for item in data %}
+    <div class="col-md-4">
+    <div class="card mb-4">
+        <div class="card-body">
+        <h5 class="card-title">Project: {{ item.project }}</h5>
+        <p class="card-text">Data Type: {{ item.data_type }}</p>
+        <a href="/results/{{item.id}}/metadata" class="btn btn-primary">Results</a>
+        </div>
+    </div>
+    </div>
+    {% endfor %}
+</div>
+  
+{% endblock content %}
+
+{% block javascripts %}
+{% endblock javascripts %}

@@ -19,12 +19,14 @@
 {% endblock stylesheets %}
 
 {% block content %} 
+<div class="row justify-content-center mb-4">
 
 {% include 'includes/studyCaseInfoBlock.html' %}
-
 {% include 'includes/resultsBtn.html' %}
 
-<div class="accordion" id="accordionExample">
+</div>
+
+<div class="accordion mb-4" id="accordionExample">
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
@@ -79,7 +81,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
-    axios.get('/api/metadata?studyCase=' + {{id}})
+    axios.get('/api/studyCase/'+{{id}}+'/metadata')
     .then(response => {
         results = response.data.results;
 
@@ -113,11 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }).catch(error => {
         console.log(error)
-        })
+    })
 
-    axios.get('/api/studyCase?id=' + {{id}})
+    axios.get('/api/studyCase/' + {{id}})
     .then(respones => {
-        studyCase = respones.data.results[0];
+        studyCase = respones.data;
         var html = `
             <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
             `

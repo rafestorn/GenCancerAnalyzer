@@ -17,18 +17,24 @@
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/regression/2.0.1/regression.min.js"></script>
+
 
 {% endblock stylesheets %}
 
 {% block content %} 
-{% include 'includes/studyCaseInfoBlock.html' %}
-{% include 'includes/resultsBtn.html'%}
+<div class="row justify-content-center mb-4">
 
-<div class="accordion" id="accordionResults">
+    {% include 'includes/studyCaseInfoBlock.html' %}
+    {% include 'includes/resultsBtn.html' %}
+    
+</div>
+
+<div class="accordion mb-4" id="accordionResults">
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                Datatable
+                Datatable Diferential Expression
             </button>
         </h2>
         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionResults">
@@ -97,9 +103,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        axios.get('/api/studyCase?id=' + {{id}})
+        axios.get('/api/studyCase/' + {{id}})
         .then(response => {
-            studyCase = response.data.results[0];
+            studyCase = response.data;
             var html = `
                 <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
                 `
@@ -212,7 +218,6 @@
     }
 
     function updateVolcanoPlot(data, pvalueThresholdinput, logfcThresholdinput) {
-        console.log(pvalueThresholdinput, logfcThresholdinput)
         const significant_genes = data.filter(row => 
             (row.PValue < pvalueThresholdinput) && 
             (Math.abs(row.logFC) > logfcThresholdinput)
@@ -313,7 +318,7 @@
     pvalueInput.value = threshold_pvalue;
     logfcInput.value = threshold_logfc;
     
-    axios.get('/api/differentialExpression?studyCase={{id}}')
+    axios.get('/api/studyCase/'+{{id}}+'/differentialExpression')
         .then(response => {
             results = response.data.results;
             $(document).ready(function() {
@@ -417,7 +422,7 @@
 
     //Updates the correlation plot given the genes ids selected
     function updateCorrPlot(gen1, gen2) {
-        axios.get("/api/rnaExpression?studyCase=90&genes_ids=" + gen1 +","+gen2)
+        axios.get("/api/studyCase/" + {{id}} + "/rnaExpression?genes_ids=" + gen1 +","+gen2)
         .then(response => {
             $('#corrPlotError').hide()
             resultsCorr = response.data.results
@@ -443,7 +448,17 @@
         y: yValues,
         text: Object.keys(data[0].data), // Nombres de los puntos
         mode: 'markers',
-        type: 'scatter'
+        type: 'scatter',
+        name: 'Value'
+        };
+
+        const trendline = {
+            type: 'scatter',
+            mode: 'lines',
+            x: xValues,
+            y: calculateTrendline(xValues, yValues), // Debes implementar la función para calcular la línea de tendencia
+            name: 'Línea de Regresión lineal',
+            line: { color: 'red' } // Puedes personalizar el color y estilo de la línea
         };
 
         const layout = {
@@ -456,9 +471,26 @@
         };
 
         // Crear el gráfico
-        Plotly.newPlot('corr-plot', [trace], layout, {responsive: true});
+        Plotly.newPlot('corr-plot', [trace, trendline], layout, {responsive: true});
     }
 
+    function calculateTrendline(xValues, yValues) {
+        // Crear un arreglo de puntos (x, y) para la regresión lineal
+        const data = xValues.map((x, index) => [x, yValues[index]]);
+        
+        // Realizar el cálculo de la regresión lineal
+        const result = regression.linear(data);
+        
+        // Obtener los coeficientes de la línea de tendencia
+        const gradient = result.equation[0]; // Pendiente (m)
+        const yIntercept = result.equation[1]; // Intersección en Y (b)
+        
+        // Calcular los valores Y correspondientes a los valores X (para la línea de tendencia)
+        const trendlineYValues = xValues.map(x => gradient * x + yIntercept);
+        
+        return trendlineYValues;
+    }
+    
 
     // Configuración del gráfico
     var genes = ["ENSG00000103569", "ENSG00000118271"];
