@@ -46,7 +46,13 @@
         <div class="card-body">
         <h5 class="card-title">Project: {{ item.project }}</h5>
         <p class="card-text">Data Type: {{ item.data_type }}</p>
-        <a href="/results/{{item.id}}/metadata" class="btn btn-primary">Results</a>
+        {% if item.state == "ANALISIS"%}
+            <p style="color: orange;"> Analisis: In progress</p>
+            <p>The analisis process may take a while. Please wait.</p>
+        {% else %}
+            <p style="color: green;">Analisis: {{ item.state }}</p>
+            <a href="/results/{{item.id}}/metadata" class="btn btn-primary">Results</a>
+        {% endif %}
         </div>
     </div>
     </div>

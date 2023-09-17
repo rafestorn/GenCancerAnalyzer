@@ -15,17 +15,18 @@ def index(request):
             data_type = form.cleaned_data['data_type']
             if StudyCase.objects.filter(project=project_id, data_type=data_type).exists():
                 sc = StudyCase.objects.get(project=project_id, data_type=data_type)
-                return redirect('metadata', id = StudyCase.objects.get(project=project_id, data_type=data_type).id)
+                if sc.state == "DONE":
+                    return redirect('metadata', id = StudyCase.objects.get(project=project_id, data_type=data_type).id)
+                else:
+                    return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
             else:
                 try:
                     tarea = analisis.delay(project_id, data_type)
+                    return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
                 except:
                     html_template = loader.get_template('home/page-500.html')
                     return HttpResponse(html_template.render({}, request))
-                    
-
-            return redirect('home')
-
+            
     else:
         context = {'form': AnalyzeForm()}
         html_template = loader.get_template("home/index.html")

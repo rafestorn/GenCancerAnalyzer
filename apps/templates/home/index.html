@@ -64,7 +64,7 @@
             projectInfoContainer.innerHTML = html;
         }
         $('#id_projects').select2();
-        $('#id_projects').on('change', function() {
+        $('#id_projects, #id_data_type').on('change', function() {
             var selectedProjectId = selectProjectId.value;
             var selectedDataType = selectDatatype.value;
 
@@ -78,16 +78,22 @@
                     <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
                     <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
                 `;
-                axios.get('/api/studyCase?project=' + selectedProjectId,'&data_type='+selectedDataType) 
+                axios.get('/api/studyCase?project=' + selectedProjectId+'&data_type='+selectedDataType) 
                 .then(response2 => {
                     if (response2.data.total_items == 0)  {
                         var html2 = `
                         <p style="color: red;"><strong>Not analyzed</strong></p>
                         `;
                     } else {
-                        var html2 = `
-                        <p style="color: green;"><strong>Already analyzed</strong></p>
-                        `;
+                        if (response2.data.results[0].state == 'ANALISIS') {
+                            var html2 = `
+                            <p style="color: orange;"><strong>Analysis in progress</strong></p>
+                            `;
+                        } else {
+                            var html2 = `
+                            <p style="color: green;"><strong>Already analyzed</strong></p>
+                            `;
+                        }
                     }
                     projectInfoContainer.innerHTML = html+html2;
                 }).catch(error => {

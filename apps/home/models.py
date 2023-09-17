@@ -2,14 +2,15 @@ from django.db import models
 
 # Create your models here.
 class StudyCase(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField()
+    state = models.CharField(max_length=50, default='ANALISIS')
     project = models.CharField(max_length=200)
     data_type = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.title
+        return self.project + ' - ' + self.data_type
     
+    unique_together = ('project', 'data_type')
+
 class MetaData(models.Model):
     studyCase = models.ForeignKey(StudyCase, on_delete=models.CASCADE)
     creation_date = models.DateTimeField(auto_now_add=True)

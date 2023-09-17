@@ -9,21 +9,23 @@ import csv
 
 @shared_task
 def analisis(project_id, data_type):
-    print(project_id, data_type)
+    sc = StudyCase(project=project_id, data_type=data_type)
+    sc.save()
     base_dir = 'DATA/' + project_id +'/'+ data_type
     if not os.path.exists(base_dir +'/data'):
         downloadRNA(project_id, data_type)
     if not os.path.exists(base_dir + '/results'):
         analysisRNA(project_id, data_type)
 
-    sc = StudyCase(project=project_id, title='Caso de prueba', description='Hola buenas tardes', data_type=data_type)
-    sc.save()
-
     process_rna_expr_csv('DATA/' + project_id +'/'+ data_type+'/results/RNA_EXPR.csv', sc)
     process_metadata_csv('DATA/' + project_id +'/'+ data_type +'/results/metaMatrix_RNA.csv', sc)
     process_diff_expr_csv('DATA/' + project_id +'/'+ data_type +'/results/DEGALL_CHOL.csv', sc)
     if data_type == "RNAseq":
         process_enrich_csv('DATA/' + project_id +'/'+ data_type +'/results/ENRICH_ANALYSIS.csv', sc)
+
+    # actualizar sc state
+    sc.state = "DONE"
+    sc.save()
 
     remove_data(project_id, data_type)
 
