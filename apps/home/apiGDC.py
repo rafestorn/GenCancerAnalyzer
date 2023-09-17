@@ -22,8 +22,11 @@ def getProjects():
     
 def getProjectsName():
     result = getProjects()
-    ids = [{"id": e["project_id"], "name": e["name"]} for e in result["data"]["hits"]]
-    return ids
+    if result:
+        ids = [{"id": e["project_id"], "name": e["name"]} for e in result["data"]["hits"]]
+        return ids
+    else:
+        return None
 
 def getProjectById(project_id):
     response = requests.get(projects_endpt + "/" + project_id).json()['data']
