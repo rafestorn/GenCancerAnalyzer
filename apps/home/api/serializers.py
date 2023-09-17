@@ -19,7 +19,7 @@ class DiffExprAnalysisDataSerializer(serializers.ModelSerializer):
 class EnrichDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnrichData
-        exclude = ['gene_ids','gene_symbols']
+        fields = '__all__'
 
 class RNAExpressionSerializer(serializers.ModelSerializer):
     class Meta:
