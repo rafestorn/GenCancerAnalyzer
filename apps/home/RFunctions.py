@@ -53,7 +53,6 @@ def analysisRNA(projectID, dataType):
         rnadir <- paste('DATA', '{projectID}', '{dataType}', 'data', sep='/')
         
         # Guardar el DataFrame en un archivo CSV
-        write.csv(metaMatrix.RNA, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'metaMatrix_RNA.csv', sep = '/'), row.names = TRUE)
 
         ####### Merge RNAseq data #######
         rnaCounts <- gdcRNAMerge(metadata  = metaMatrix.RNA, 
@@ -61,11 +60,8 @@ def analysisRNA(projectID, dataType):
                             organized = FALSE, # if the data are in separate folders
                             data.type = '{dataType}')
         
-        write.csv(rnaCounts, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'rnaCounts.csv', sep = '/'), row.names = TRUE)
-
         ####### Normalization of RNAseq data #######
         rnaExpr <- gdcVoomNormalization(counts = rnaCounts, filter = FALSE)
-        write.csv(rnaExpr, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'RNA_EXPR.csv', sep = '/'), row.names = TRUE)
 
         result <- gdcDEAnalysis(counts = rnaCounts, 
                         group      = metaMatrix.RNA$sample_type, 
@@ -73,11 +69,26 @@ def analysisRNA(projectID, dataType):
                         method     = 'DESeq2',
                         filter=TRUE)
                     
+
+        if ('{dataType}' == 'RNAseq') {{
+
+            filterDE <- gdcDEReport(deg = result, gene.type = 'all')
+        
+            enrichOutput <- gdcEnrichAnalysis(gene = rownames(filterDE), simplify = TRUE)        
+            survivalOutput <- gdcSurvivalAnalysis(gene = rownames(filterDE), 
+                                  method   = 'KM', 
+                                  rna.expr = rnaExpr, 
+                                  metadata = metaMatrix.RNA, 
+                                  sep      = 'median')
+
+            write.csv(enrichOutput, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'ENRICH_ANALYSIS.csv', sep = '/'), row.names = TRUE)
+            write.csv(survivalOutput, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'survival_results.csv', sep='/'), row.names = TRUE)
+        }}
+
         write.csv(result, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'DEGALL_CHOL.csv', sep = '/'), row.names = TRUE)
-
-        enrichOutput <- gdcEnrichAnalysis(gene = rownames(result), simplify = TRUE)
-
-        write.csv(enrichOutput, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'ENRICH_ANALYSIS.csv', sep = '/'), row.names = TRUE)
+        write.csv(rnaExpr, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'RNA_EXPR.csv', sep = '/'), row.names = TRUE)
+        write.csv(rnaCounts, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'rnaCounts.csv', sep = '/'), row.names = TRUE)
+        write.csv(metaMatrix.RNA, file = paste('DATA', '{projectID}', '{dataType}', 'results', 'metaMatrix_RNA.csv', sep = '/'), row.names = TRUE)
         '''
     robjects.r(r_script)
 

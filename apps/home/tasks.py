@@ -1,9 +1,9 @@
 from celery import shared_task
 import os
-from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion
+from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion, SurvivalAnalysisResults
 from .RFunctions import downloadRNA, analysisRNA
 from .apiGDC import statusGDCApi
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.http import HttpResponse
 import csv
 
@@ -22,6 +22,7 @@ def analisis(project_id, data_type):
     process_diff_expr_csv('DATA/' + project_id +'/'+ data_type +'/results/DEGALL_CHOL.csv', sc)
     if data_type == "RNAseq":
         process_enrich_csv('DATA/' + project_id +'/'+ data_type +'/results/ENRICH_ANALYSIS.csv', sc)
+        process_survival_csv('DATA/' + project_id +'/'+ data_type +'/results/survival_results.csv', sc)
 
     # actualizar sc state
     sc.state = "DONE"
@@ -108,6 +109,18 @@ def process_enrich_csv(file_path, sc):
     }
     additional_fields = {'studyCase': sc}
     process_csv_file(file_path, EnrichData, field_mapping, additional_fields)
+
+def process_survival_csv(file_path, sc):
+    field_mapping = {
+        'gene_id': '',
+        'symbol': 'symbol',
+        'hr': 'HR',
+        'lower95': 'lower95',
+        'upper95': 'upper95',
+        'p_value': 'pValue'
+    }
+    additional_fields = {'studyCase': sc}
+    process_csv_file(file_path, SurvivalAnalysisResults, field_mapping, additional_fields)
 
 def process_rna_expr_csv(file_path, sc):
     with open(file_path, 'r') as csvfile:

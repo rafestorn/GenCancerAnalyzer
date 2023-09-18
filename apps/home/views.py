@@ -6,6 +6,7 @@ from django.urls import reverse
 from .models import StudyCase
 from .forms import AnalyzeForm
 from .tasks import analisis
+from .apiGDC import statusGDCApi
 
 def index(request):
     if request.method == 'POST':
@@ -21,8 +22,11 @@ def index(request):
                     return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
             else:
                 try:
-                    tarea = analisis.delay(project_id, data_type)
-                    return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
+                    if statusGDCApi():
+                        tarea = analisis.delay(project_id, data_type)
+                        return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
+                    else:
+                        return HttpResponse("Error: GDC API is not available")
                 except:
                     html_template = loader.get_template('home/page-500.html')
                     return HttpResponse(html_template.render({}, request))

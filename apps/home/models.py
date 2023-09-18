@@ -74,3 +74,13 @@ class RNAExpresion(models.Model):
 
     class Meta:
         db_table = 'rna_expression'
+
+class SurvivalAnalysisResults(models.Model):
+    studyCase = models.ForeignKey(StudyCase, on_delete=models.CASCADE)
+    gene_id = models.CharField(max_length=50)
+    symbol = models.CharField(max_length=50)
+    hr = models.FloatField()
+    lower95 = models.FloatField()
+    upper95 = models.FloatField()
+    p_value = models.FloatField()
+
