@@ -60,11 +60,66 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="headingTwo">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-            Bar Plots
+            Plot Results
         </button>
         </h2>
         <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionResults">
             <div class="accordion-body">
+                <div class="row my-4">
+                    <div class="col-md-8">
+                        <p class="mb-2">Explore the results of the enrichment analysis below. Click the "Configure" button to customize the plot parameters, such as plot type, field, item limit, category filter, and sorting order.</p>
+                    </div>
+                    <div class="col-md-4 text-md-right">
+                        <button id="btnConfigureBarPlot" class="btn btn-primary">Configure</button>
+                    </div>
+                </div>
+                <div id="popupBarPlot" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Configure BarPlot</h5>
+                                <button id="closePopupBarPlot" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="plot-select">Plot type:</label>
+                                    <select id="plot-select" class="form-control">
+                                        <option value="bar">Bar</option>
+                                        <option value="bubble">Bubble</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="limit">Limit:</label>
+                                    <input type="number" id="limit" class="form-control" step="1" value="10">
+                                </div>
+                                <div class="form-group">
+                                    <label for="category-select">Category:</label>
+                                    <select id="category-select" class="form-control"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="field-select">Field to sort:</label>
+                                    <select id="field-select" class="form-control">
+                                        <option value="fdr">FDR</option>
+                                        <option value="fold_enrichment">Fold Enrichment</option>
+                                        <option value="p_value">P-Value</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="order-select">Sort order:</label>
+                                    <select id="order-select" class="form-control">
+                                        <option value="asc">Ascending</option>
+                                        <option value="dsc">Descending</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button id="btnBarPlot" class="btn btn-primary">Actualizar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="bar-plot"></div>
             </div>
         </div>
@@ -78,10 +133,8 @@
 <script>
 // Script to load project information block
 document.addEventListener('DOMContentLoaded', function() {
-
-
     axios.get('/api/studyCase/'+ {{id}})
-    .then(response => {
+     .then(response => {
         studyCase = response.data;
         var html = `
             <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
@@ -105,16 +158,26 @@ document.addEventListener('DOMContentLoaded', function() {
             projectInfoContainer.innerHTML = html;
         })
     })
-    .catch(error => {
+     .catch(error => {
         var html = `
             <p><strong>Unable to get project info</strong></p>
         `
-    })
-
-})
+        })
+});
 </script>
 
 <script>
+
+    const btnBarPlot = document.getElementById('btnBarPlot');
+    const btnConfigureBarPlot = document.getElementById('btnConfigureBarPlot'); 
+    const closeButtonBarPlot = document.getElementById('closePopupBarPlot');
+    const popupBarPlot = document.getElementById("popupBarPlot");
+    const selectCategory = document.getElementById("category-select");
+    const selectField = document.getElementById("field-select");
+    const orderField = document.getElementById("order-select");
+    const limitInput = document.getElementById("limit");
+    const plotSelect = document.getElementById("plot-select");
+
     document.addEventListener("DOMContentLoaded", function() {
         
         axios.get('/api/studyCase/'+{{id}}+'/enrichAnalysis')
@@ -141,38 +204,126 @@ document.addEventListener('DOMContentLoaded', function() {
                         'csv', 'excel'
                     ]
                 });
+                var categories = results.map(e => e.category)
+                var uniqueCategories = categories.filter((value, index, self) => {
+                    return self.indexOf(value) === index;
+                });
+
+                uniqueCategories.forEach(function(valor, indice) {
+                    var option = document.createElement("option");
+        
+                    option.value = valor; 
+                    option.textContent = valor;
+                    $('#category-select').append(option);
+                });
 
                 //Loads bar plot
-                updateBarPlot(results);
+                updateBarPlot(results, 20, 'GO_BP', 'fdr', 'asc', 'bar');
 
+                btnBarPlot.addEventListener("click", function() {
+                    updateBarPlot(results, limitInput.value, selectCategory.value, selectField.value, orderField.value, plotSelect.value);
+                    popupBarPlot.classList.remove("show");
+                    popupBarPlot.style.display = "none";
+                });
+    
+                btnConfigureBarPlot.addEventListener("click", function() {
+                    popupBarPlot.classList.add("show");
+                    popupBarPlot.style.display = "block";
+                });
+    
+                closeButtonBarPlot.addEventListener("click", function() {
+                    popupBarPlot.classList.remove("show");
+                    popupBarPlot.style.display = "none";
+                });
 
             })
             .catch(error => {
                 console.log(error);
             })
         });
+    
+        function normalizeList(inputList, nuevoMin = 10, nuevoMax = 50) {
+            const minOriginal = Math.min(...inputList);
+            const maxOriginal = Math.max(...inputList);
+          
+            // Normalización min-max
+            if (minOriginal === maxOriginal) {
+                return inputList.map(function() {
+                    return (nuevoMin + nuevoMax) / 2;
+                });
+            }
+            return inputList.map(function(valor) {
+                return nuevoMin + (valor - minOriginal) * (nuevoMax - nuevoMin) / (maxOriginal - minOriginal);
+            });          
+        }
+        
+        function createTraceBarPlot(data, limit, category, field , order, plotType) {
+            var filteredData = data.filter(e => e.category == category)
 
-        function createTraceBarPlot(data, limit, category) {
-            // Filtra y ordena los datos aquí
-            var filteredData = data.filter(e => e.category == category).sort(e => -e.fdr).slice(0,limit);
-            console.log(filteredData);
-            var trace = {
-                x: filteredData.map(e => e.terms),
-                y: filteredData.map(e => -1*Math.log(e.fdr)),
-                type: 'bar',
-                marker: {
-                    color: 'rgb(82, 53, 92)'
+            filteredData = filteredData.sort(function(a, b) {
+                var fdrA = parseFloat(a[field]);
+                var fdrB = parseFloat(b[field]);
+            
+                if (fdrA < fdrB) {
+                    if (order == "asc") {
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                    return -1;
+                } else if (fdrA > fdrB) {
+                    if (order == "asc") {
+                        return 1;
+                    } else {
+                        return -1;
+                    }
+                } else {
+                    return 0;
                 }
+            }).slice(0, limit);
+
+            if (field == "fold_enrichment"){
+                var y = filteredData.map(e => e[field])
+            } else {
+                var y = filteredData.map(e => -1*Math.log10(e[field]))
+            }
+
+            if (plotType == "bubble") {
+                lista = normalizeList(y.slice(0, limit))
+                console.log(lista)
+                var trace = {
+                    x: filteredData.map(e => e.terms),
+                    y: y,
+                    mode: 'markers',
+                    marker: {
+                        color: 'rgb(82, 53, 92)',
+                        size: lista
+                    }
+                };
+            } else {
+                var trace = {
+                    x: filteredData.map(e => e.terms),
+                    y: y,
+                    type: 'bar',
+                    marker: {
+                        color: 'rgb(82, 53, 92)',
+                    }
+                };
             };
             return trace;
         }
-    
-        function updateBarPlot(data) {
-            trace = createTraceBarPlot(data, 10, 'GO_BP');
+
+        function updateBarPlot(data, limit, category, field, order, plotType) {
+            trace = createTraceBarPlot(data, limit, category, field, order, plotType);
+            if (field == "fold_enrichment"){
+                var ytitle = field
+            } else {
+                var ytitle = "-log10("+field+")"
+            }
             var layout = {
-                title: 'Barplot',
+                title: plotType+'plot',
                 xaxis: {title: 'Terms'},
-                yaxis: {title: '-log10(FDR)'}
+                yaxis: {title: ytitle}
             };
             Plotly.newPlot('bar-plot', [trace], layout, {responsive: true});
             Plotly.Plots.resize('bar-plot');
