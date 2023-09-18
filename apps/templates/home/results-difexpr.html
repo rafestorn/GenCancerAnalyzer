@@ -151,7 +151,7 @@
     const volcanoPlotlayout = {
     title: 'Volcano Plot',
     xaxis: {
-        title: 'Fold Change (logFC)',
+        title: 'Fold Change (log2FC)',
         showline: true,
         showgrid: false
     },
@@ -162,9 +162,8 @@
     },
     legend: {
         orientation: 'h',
-        xanchor: 'center',
-        x: 0.5,
-        y: 2,
+        xanchor: 0.9,
+        y: 1.2
     },
     shapes: [
         {
@@ -306,6 +305,11 @@
 
         const layout = {
             yaxis: { title: 'Nº of differentially expressed genes' },
+            legend: {
+                orientation: 'h',
+                x: 0.8,
+                y: 1
+            },
         };
 
         Plotly.newPlot('bar-chart', dataTraces, layout, {responsive: true});
@@ -467,7 +471,12 @@
         },
         yaxis: {
             title: geneNames[1] // Nombre del gen para el eje Y
-        }
+        },
+        legend: {
+            orientation: 'h',
+            xanchor: 0.9,
+            y: 1.2
+        },
         };
 
         // Crear el gráfico

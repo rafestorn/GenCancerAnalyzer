@@ -19,16 +19,17 @@
                     <form action="analysis" method="POST" style="background-color: rgb(255, 255, 255);">
                         {% csrf_token %}
                         <div class="mb-3">
-                            {{ form.projects.label_tag }}
-                            {{ form.projects }}
-                        </div>
-                        
-                        <div class="mb-3">
                             {{ form.data_type.label_tag }}
                             {{ form.data_type }}
                         </div>
-                        <div class="mb-3 text-center">
-                            <button type="submit" class="btn btn-outline-primary" id="btnAnalyze">Analyze</button>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                {{ form.projects.label_tag }}
+                                {{ form.projects }}
+                            </div>
+                            <div class="col-md-4 mt-4">
+                                <button type="submit" class="btn btn-outline-primary" id="btnAnalyze">Analyze</button>
+                            </div>
                         </div>
                     </form>
                 </div>

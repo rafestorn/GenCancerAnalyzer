@@ -1,27 +1,38 @@
 <div id = "volcanoPlotContainer">
+    <p>A volcano plot is a graphical representation where:</p>
+    <ul>
+        <li><strong>Horizontal Axis:</strong> represents the effect size or fold change of a parameter. In this case the log2(fold change), which measures how much a particular gene changes between two conditions (PrimaryTumor-SolidTissueNormal). Positive values on the right side of the axis indicate upregulation, while negative values on the left side indicate downregulation.</li>
+        <li><strong>Vertical Axis:</strong> represents the statistical significance of the parameter, expressed as the negative logarithm (base 10) of the p-value. The higher the values are on the y-axis means the lower are th p-values, therefore more significance.</li>
+        <li><strong>Points:</strong> represent the genes. The color of the points indicates the significance of the parameter given the thresholds.</li>
+        <li><strong>Thresholds:</strong> are the values that the user can set to filter the genes. The user can set the threshold for the p-value and the log2(fold change).</li>
+    </ul>
+    <p>
     <button id="btnConfigureVolcanoPlot" class="btn btn-primary">Config</button>
     <div id="popupVolcanoPlot" class="modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Configure VolcanoPlot</h5>
+                    <h5 class="modal-title">Configurar Volcano Plot</h5>
                     <button id="closePopupVolcanoPlot" type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <label for="pvalue-threshold">P-Value Threshold:</label>
-                    <input type="number" id="pvalue-threshold" step="0.01" value="0.05">
-                    <br>
-                    <label for="logfc-threshold">LogFC Threshold:</label>
-                    <input type="number" id="logfc-threshold" step="0.1" value="2">
-                    <br>
+                    <div class="form-group">
+                        <label for="pvalue-threshold">Threshold P-Value:</label>
+                        <input type="number" id="pvalue-threshold" class="form-control" step="0.01" value="0.05">
+                    </div>
+                    <div class="form-group">
+                        <label for="logfc-threshold">Threshold LogFC:</label>
+                        <input type="number" id="logfc-threshold" class="form-control" step="0.1" value="2">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button id="btnVolcanoPlot" class="btn btn-primary">Actualizar</button>
                 </div>
+                
             </div>
         </div>
     </div>
-    <div id="volcanoPlot"></div>
+    <div id="volcanoPlot" style="height: 400px;"></div>
 </div>
