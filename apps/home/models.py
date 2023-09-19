@@ -14,7 +14,7 @@ class StudyCase(models.Model):
 class MetaData(models.Model):
     studyCase = models.ForeignKey(StudyCase, on_delete=models.CASCADE)
     creation_date = models.DateTimeField(auto_now_add=True)
-    case_id = models.CharField(null=True, max_length=200)
+    case_id = models.CharField(max_length=200)
     file_name = models.CharField(null=True, max_length=200)
     file_id = models.CharField(null=True, max_length=36)
     patient = models.CharField(null=True, max_length=50)
@@ -33,6 +33,9 @@ class MetaData(models.Model):
 
     def __str__(self):
         return self.case_id
+    
+    class Meta:
+        unique_together = ('studyCase', 'case_id')
     
 class DiffExprAnalysisData(models.Model):
     studyCase = models.ForeignKey(StudyCase, on_delete=models.CASCADE)
@@ -78,7 +81,7 @@ class RNAExpresion(models.Model):
 class SurvivalAnalysisResults(models.Model):
     studyCase = models.ForeignKey(StudyCase, on_delete=models.CASCADE)
     gene_id = models.CharField(max_length=50)
-    symbol = models.CharField(max_length=50)
+    symbol = models.CharField(null=True, max_length=50)
     hr = models.FloatField()
     lower95 = models.FloatField()
     upper95 = models.FloatField()
