@@ -1,0 +1,132 @@
+{% extends 'layouts/base.html' %}
+
+{% load static %}
+
+{% block title %} Univariate Survival Results {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+  
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+
+{% endblock stylesheets %}
+
+{% block content %} 
+<div class="row justify-content-center mb-4">
+
+{% include 'includes/studyCaseInfoBlock.html' %}
+{% include 'includes/resultsBtn.html' %}
+
+</div>
+
+<div class="accordion mb-4" id="accordionResults">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Datatable
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionResults">
+            <div class="accordion-body">
+                <table id="diffExprDatatable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>gene_id</th>
+                            <th>Symbol</th>
+                            <th>HR</th>
+                            <th>lower95</th>
+                            <th>upper95</th>
+                            <th>p_value</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            Survival Plot
+        </button>
+        </h2>
+    </div>
+</div>
+
+{% endblock content %}
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    axios.get('/api/studyCase/' + {{id}})
+    .then(response => {
+        studyCase = response.data;
+        var html = `
+            <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
+            `
+        projectHeader.innerHTML = html;
+        axios.get('https://api.gdc.cancer.gov/projects/' + studyCase.project)
+        .then(response => {
+            projectInfo = response.data.data;
+            var html = `
+                <p><strong>Name:</strong> ${projectInfo.name}</p>
+                <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+            `;
+            projectInfoContainer.innerHTML = html;
+        }).catch(error => {
+            var html = `
+            <p><strong>Unable to get project info</strong></p>
+            `;
+            projectInfoContainer.innerHTML = html;
+        })
+    })
+    .catch(error => {
+        var html = `
+            <p><strong>Unable to get project info</strong></p>
+        `
+    })
+})
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    axios.get('/api/studyCase/'+{{id}}+'/survivalAnalysis')
+        .then(response => {
+            results = response.data.results;
+            //Loads datatble enrichment
+            const dataTable = $('#diffExprDatatable').DataTable({
+                scrollX: true,
+                data: results,
+                columns: [
+                    { data: 'gene_id' },
+                    { data: 'symbol' },
+                    { data: 'hr'},
+                    { data: 'lower95'},
+                    { data: 'upper95'},
+                    { data: 'p_value'}
+                ],
+                dom: 'Bfrtip',
+                buttons: [
+                    'csv', 'excel'
+                ]
+            });
+        }).catch(error => {
+            console.log(error);
+        })
+})
+</script>
+
+{% endblock javascripts %}
