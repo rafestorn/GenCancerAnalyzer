@@ -22,11 +22,15 @@ def index(request):
                     return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
             else:
                 try:
+                    print(str(statusGDCApi))
                     if statusGDCApi():
-                        tarea = analisis.delay(project_id, data_type)
+                        sc = StudyCase(project=project_id, data_type=data_type)
+                        sc.save()
+                        tarea = analisis.delay(project_id, data_type, sc.id)
                         return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
                     else:
-                        return HttpResponse("Error: GDC API is not available")
+                        html_template = loader.get_template('home/page-500.html')
+                        HttpResponse(html_template.render({}, request))
                 except:
                     html_template = loader.get_template('home/page-500.html')
                     return HttpResponse(html_template.render({}, request))
@@ -66,6 +70,9 @@ def diffExpr(request, id):
 
 def enrichment(request, id):
     return render(request, 'home/results-enrich.html', {'id': id})
+
+def survivalAnalysis(request, id):
+    return render(request, 'home/results-survival.html', {'id': id})
 
 def analyzedProjects(request):
 
