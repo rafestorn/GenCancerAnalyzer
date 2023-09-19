@@ -1,6 +1,6 @@
 from rest_framework import viewsets
-from ..models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion
-from .serializers import StudyCaseSerializer, MetaDataSerializer, DiffExprAnalysisDataSerializer, EnrichDataSerializer, RNAExpressionSerializer
+from ..models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion, SurvivalAnalysisResults
+from .serializers import StudyCaseSerializer, MetaDataSerializer, DiffExprAnalysisDataSerializer, EnrichDataSerializer, RNAExpressionSerializer, SurvivalAnalysisResultsSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
@@ -251,3 +251,46 @@ class RNAexprCaseViewSet(APIView):
             "results": serializer.data,
         }
         return Response(response)
+
+class SurvivalCaseViewSet(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('orderBy', openapi.IN_QUERY, description="Sort by field", type=openapi.TYPE_STRING, enum=['hr', '-hr','lower95', '-lower95', 'upper95', '-upper95', 'p_value', '-p_value']),
+            openapi.Parameter('maxItems', openapi.IN_QUERY, description="Max number of items in a query", type=openapi.TYPE_INTEGER, minimum=1),
+            openapi.Parameter('page', openapi.IN_QUERY, description="Page", type=openapi.TYPE_INTEGER, minimum=1),
+        ],
+        responses={
+            200: 'OK',
+            404: 'Not Found',
+        }
+    )
+    def get(self, request, studyCase_id):
+        max_items = request.query_params.get('maxItems')
+        page = request.query_params.get('page')
+        orderBy = request.query_params.get('orderBy')
+
+        if page is None:
+            page = 1
+
+        queryset = SurvivalAnalysisResults.objects.filter(studyCase__id=studyCase_id)
+
+        if orderBy:
+            queryset = queryset.order_by(orderBy)
+        
+        if not queryset.exists():
+            raise Http404("No se encontraron resultados para esta consulta.")
+        
+        pag_queryset = paginate_queryset(queryset, page, max_items)
+
+        serializer = SurvivalAnalysisResultsSerializer(pag_queryset, many=True)
+        
+        response = {
+            "page": int(page) if page is not None else 1,
+            "items_in_page": pag_queryset.count(),
+            "total_items": queryset.count(),
+            "total_pages": queryset.count()//int(max_items) + 1 if max_items is not None else 1,
+            "next_page": request.build_absolute_uri() + f"&page={int(page)+1}" if max_items is not None and int(page)*int(max_items) < queryset.count() else None,
+            "results": serializer.data,
+        }
+        return Response(response)
+        
