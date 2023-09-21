@@ -6,6 +6,11 @@ from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.http import Http404
+import pandas as pd
+from lifelines import KaplanMeierFitter
+from statistics import median, mean
+from django.db.models import F
+from django.contrib.postgres.fields import JSONField
 
 def paginate_queryset(queryset, page, max_items):
     if max_items and int(max_items) > 0:
@@ -251,6 +256,85 @@ class RNAexprCaseViewSet(APIView):
             "results": serializer.data,
         }
         return Response(response)
+    
+def getFunctionSurvivalAnalysis(time_list, event_list):
+    data = pd.DataFrame({'time': time_list, 'event': event_list})
+    kmf = KaplanMeierFitter()
+    kmf.fit(data['time'], event_observed=data['event'])
+    survival_function = kmf.survival_function_
+    return survival_function['KM_estimate'].to_dict()
+    
+def expand_metadata(dict, studyCase_id, show_metadata=False, calculate_kmsurvival_function=False, sample_type_KMsurvival=None):
+    days_to_death_list = []
+    days_to_last_follow_up_list = []
+    vital_status_list = []
+    for key, value in dict.items():
+        md = MetaData.objects.get(studyCase__id=studyCase_id, sample=key)
+        if md.sample_type == sample_type_KMsurvival or sample_type_KMsurvival == None:
+            days_to_death = md.days_to_death
+            days_to_last_follow_up = md.days_to_last_follow_up
+            vital_status = md.vital_status
+            days_to_last_follow_up_list.append(days_to_last_follow_up)
+            days_to_death_list.append(days_to_death)
+            vital_status_list.append(True if vital_status == 'Dead' else False)
+        if show_metadata == "true":
+            dict[key] = {'rna_expr_value': value, 'metadata': MetaDataSerializer(md).data}
+    if calculate_kmsurvival_function:
+        merged_list = [last_follow_up if death is None else death for death, last_follow_up in zip(days_to_death_list, days_to_last_follow_up_list)]
+        if len(merged_list) == 0:
+            dict['survival_function'] = "No data with the given sample type"
+        else:
+            survival_function = getFunctionSurvivalAnalysis(merged_list, vital_status_list)
+            dict['survival_function'] = survival_function
+    return dict
+
+class RNAexprCaseByGeneViewSet(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('sep', openapi.IN_QUERY, description="Separates the data by the given threshold formula", type=openapi.TYPE_STRING, enum=['mean', 'median']),
+            openapi.Parameter('show_metadata', openapi.IN_QUERY, description="Shows metadata", type=openapi.TYPE_BOOLEAN, enum=['true', 'false']),
+            openapi.Parameter('calculate_kmsurvival_function', openapi.IN_QUERY, description="Calculates the Kaplan-Meier survival function", type=openapi.TYPE_BOOLEAN, enum=['true', 'false']),
+            openapi.Parameter('sample_type_KMsurvival', openapi.IN_QUERY, description="Filter by sample type", type=openapi.TYPE_STRING, enum=['PrimaryTumor', 'SolidTissueNormal']),
+        ],
+        responses={
+            200: 'OK',
+            404: 'Not Found',
+            500: 'Internal Server Error'
+        }
+    )
+    def get(self, request, studyCase_id, gene_id):
+        try:
+            queryset = RNAExpresion.objects.get(gene_id=gene_id, studyCase__id=studyCase_id)
+            sep = request.query_params.get('sep')
+            show_metadata = request.query_params.get('show_metadata')
+            calculate_kmsurvival_function = request.query_params.get('calculate_kmsurvival_function')
+            sample_type_KMsurvival = request.query_params.get('sample_type_KMsurvival')
+            if (sample_type_KMsurvival):
+                sample_ids_with_filter = MetaData.objects.filter(sample_type=sample_type_KMsurvival).values_list('sample', flat=True)
+                queryset.data = {key: value for key, value in queryset.data.items() if key in sample_ids_with_filter}
+            if sep:
+                if sep == 'mean':
+                    threshold = mean(queryset.data.values())
+                else:
+                    threshold = median(queryset.data.values())
+                above_threshold, below_threshold = queryset.sepByThreshold(threshold=threshold)
+                if show_metadata=='true' or calculate_kmsurvival_function=='true':
+                    above_threshold = expand_metadata(above_threshold, studyCase_id, show_metadata, calculate_kmsurvival_function, sample_type_KMsurvival=sample_type_KMsurvival)
+                    below_threshold = expand_metadata(below_threshold, studyCase_id, show_metadata, calculate_kmsurvival_function, sample_type_KMsurvival=sample_type_KMsurvival)
+                res = Response({'gene_id':queryset.gene_id, "threshold": threshold, 'threshold_formula': sep, 'above_threshold': above_threshold, 'below_threshold': below_threshold})
+            else:
+                if show_metadata=='true' or calculate_kmsurvival_function=='true':
+                    queryset.data = expand_metadata(queryset.data, studyCase_id, show_metadata, calculate_kmsurvival_function, sample_type_KMsurvival=sample_type_KMsurvival)
+                    res = Response({'gene_id':queryset.gene_id, 'data': queryset.data})                
+                serializer = RNAExpressionSerializer(queryset)    
+                res = Response(serializer.data)
+
+            return res
+
+        except StudyCase.DoesNotExist:
+            raise Http404("Study case with ID: " + str(id) +" not found")
+    
+    
 
 class SurvivalCaseViewSet(APIView):
     @swagger_auto_schema(

@@ -4,13 +4,14 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Tu API",
+      title="GenCancerAnalyzerAPI",
       default_version='v1',
-      description="Descripción de tu API",
+      description="Get access to the GenCancerAnalyzer stored data and results.",
       terms_of_service="https://www.tusitio.com/terms/",
-      contact=openapi.Contact(email="contacto@tusitio.com"),
+      contact=openapi.Contact(email="rafaestrada3@gmail.com"),
       license=openapi.License(name="Licencia"),
    ),
    public=True,
    permission_classes=(permissions.AllowAny,),
+
 )

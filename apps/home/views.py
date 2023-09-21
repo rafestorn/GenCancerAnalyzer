@@ -22,7 +22,6 @@ def index(request):
                     return redirect('/analyzedProjects?project='+project_id+'&data_type='+data_type)
             else:
                 try:
-                    print(str(statusGDCApi))
                     if statusGDCApi():
                         sc = StudyCase(project=project_id, data_type=data_type)
                         sc.save()

@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/studyCase/<int:studyCase_id>/differentialExpression', queries.DiffExprAnalysisCaseViewSet.as_view() ),
     path('api/studyCase/<int:studyCase_id>/enrichAnalysis', queries.EnrichAnalysisCaseViewSet.as_view() ),
     path('api/studyCase/<int:studyCase_id>/rnaExpression', queries.RNAexprCaseViewSet.as_view() ),
+    path('api/studyCase/<int:studyCase_id>/rnaExpression/<str:gene_id>', queries.RNAexprCaseByGeneViewSet.as_view()),
     path('api/studyCase/<int:studyCase_id>/survivalAnalysis', queries.SurvivalCaseViewSet.as_view() ),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
