@@ -101,11 +101,27 @@
 
 {% block javascripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    //Changes color of the button if the user is in the same page
 
+    var currentUrl = window.location.pathname;
+
+    var btnDiffExpr = document.getElementById('btn-diffExpr');
+    var btnEnrichment = document.getElementById('btn-enrich');
+
+    function changeButtonColor(button, targetUrl) {
+        if (currentUrl === targetUrl) {
+            button.style.backgroundColor = 'rgb(82, 53, 92)';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        changeButtonColor(btnDiffExpr, '/results/{{id}}/diffExpr');
         axios.get('/api/studyCase/' + {{id}})
         .then(response => {
             studyCase = response.data;
+            if (studyCase.data_type === 'miRNAs') {
+                btnEnrichment.remove();
+            }
             var html = `
                 <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
                 `
@@ -321,6 +337,7 @@
 
     pvalueInput.value = threshold_pvalue;
     logfcInput.value = threshold_logfc;
+
     
     axios.get('/api/studyCase/'+{{id}}+'/differentialExpression')
         .then(response => {
@@ -504,26 +521,6 @@
     // Configuración del gráfico
     var genes = ["ENSG00000103569", "ENSG00000118271"];
    
-</script>
-
-<script>    
-
-    //Changes color of the button if the user is in the same page
-
-    var currentUrl = window.location.pathname;
-
-    var btnDiffExpr = document.getElementById('btn-diffExpr');
-
-    function changeButtonColor(button, targetUrl) {
-        if (currentUrl === targetUrl) {
-            button.style.backgroundColor = 'rgb(82, 53, 92)';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        changeButtonColor(btnDiffExpr, '/results/{{id}}/diffExpr');
-    })
-
 </script>
 
 {% endblock javascripts %}

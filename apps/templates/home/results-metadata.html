@@ -124,6 +124,18 @@ function getStatistics(data, field){
     $('#'+field+'_div').html(html)
 }
 
+function changeButtonColor(button, targetUrl) {
+    if (currentUrl === targetUrl) {
+        button.style.backgroundColor = 'rgb(82, 53, 92)';
+    }
+}
+
+var currentUrl = window.location.pathname;
+
+var btnMetadata = document.getElementById('btn-metadata');
+var btnEnrichment = document.getElementById('btn-enrich');
+
+
 document.addEventListener('DOMContentLoaded', function() {
 
     axios.get('/api/studyCase/'+{{id}}+'/metadata')
@@ -167,9 +179,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(error)
     })
 
+    changeButtonColor(btnMetadata, '/results/{{id}}/metadata');
+
     axios.get('/api/studyCase/' + {{id}})
     .then(respones => {
         studyCase = respones.data;
+        if (studyCase.data_type == 'miRNAs'){
+            btnEnrichment.remove();
+        }
         var html = `
             <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
             `
@@ -198,21 +215,5 @@ document.addEventListener('DOMContentLoaded', function() {
         `
     })
 })
-</script>
-<script>
-    var currentUrl = window.location.pathname;
-
-    var btnMetadata = document.getElementById('btn-metadata');
-
-    function changeButtonColor(button, targetUrl) {
-        if (currentUrl === targetUrl) {
-            button.style.backgroundColor = 'rgb(82, 53, 92)';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        changeButtonColor(btnMetadata, '/results/{{id}}/metadata');
-    })
-
 </script>
 {% endblock javascripts %}
