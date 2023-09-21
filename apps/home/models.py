@@ -1,5 +1,4 @@
 from django.db import models
-
 # Create your models here.
 class StudyCase(models.Model):
     state = models.CharField(max_length=50, default='ANALISIS')
@@ -77,6 +76,18 @@ class RNAExpresion(models.Model):
 
     class Meta:
         db_table = 'rna_expression'
+    
+    def sepByThreshold(self, threshold):
+        above_threshold = {}
+        below_threshold = {}
+
+        for key, value in self.data.items():
+            if value >= threshold:
+                above_threshold[key] = value
+            else:
+                below_threshold[key] = value
+
+        return above_threshold, below_threshold
 
 class SurvivalAnalysisResults(models.Model):
     studyCase = models.ForeignKey(StudyCase, on_delete=models.CASCADE)
