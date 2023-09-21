@@ -8,9 +8,9 @@ from datetime import datetime
 class APITestCase(TestCase):
     def setUp(self):
         super().setUp()
-        self.StudyCase1 = StudyCase(title="Test StudyCase", description="Test StudyCase description", project="TCGA-CHOL", data_type="RNAseq")
-        self.StudyCase2 = StudyCase(title="Test StudyCase 2", description="Test StudyCase description 2", project="TCGA-CHOL", data_type="miRNAseq")
-        self.StudyCase3 = StudyCase(title="Test StudyCase 3", description="Test StudyCase description 3", project="TCGA-HNSC", data_type="RNAseq")
+        self.StudyCase1 = StudyCase(project="TCGA-CHOL", data_type="RNAseq")
+        self.StudyCase2 = StudyCase(project="TCGA-CHOL", data_type="miRNAseq")
+        self.StudyCase3 = StudyCase(project="TCGA-HNSC", data_type="RNAseq")
 
         self.StudyCase1.save()
         self.StudyCase2.save()
