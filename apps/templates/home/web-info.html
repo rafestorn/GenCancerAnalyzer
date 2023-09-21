@@ -1,0 +1,36 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Web Info {% endblock title %}
+
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+<h1 class="display-4 text-center">GenCancerAnalyzer</h1>
+
+<p>The application offers an APIRest to query the results of the analysis.</p>
+
+<h2>How Is the Analysis Performed?</h2>
+<p>GenCancerAnalyzer utilizes the "gdcRNATools" library, an R/Bioconductor package, to perform the majority of the analyses. Users can select the GDC project and the type of gene expression (RNA or miRNAs) to analyze.</p>
+
+<h2>Features:</h2>
+<ul>
+    <li><strong><a href="/">Analize</a> Projects:</strong> By selecting the project and data type get the metadata of the project and results from the differential expression analysis, enrichmente analysis (Only for RNA type), and univariate survial analysis. Also you can consult the results from <a href="/analyzedProjects">analisis</a> already made from other users.</li>
+    <li><strong>Download Results:</strong> Download the results of the analisis on csv or as an excel file.</li>
+    <li><strong>Plots:</strong> Visualize the results as plots to get better understanding of the ingormation.</li>
+    <li><strong>Access the API:</strong> Discover the <a href="/aboutApi">GenCancerAnalyzerAPI</a> to get to the stored data from the analysis.</li>
+</ul>
+
+<h2>Contact</h2>
+<p>For any questions or suggestions, please contact:</p>
+<ul>
+    
+    <li>Email: rafaestrada3@gmail.com</li>
+    <li>GitHub: <a href="https://github.com/rafestorn/GenCancerAnalyzer">GenCancerAnalyzer Github</li>
+    
+</ul>
+
+{% endblock content %}
+
+{% block javascripts %}
+{% endblock javascripts %}

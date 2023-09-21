@@ -93,3 +93,9 @@ def analyzedProjects(request):
     }
 
     return render(request, 'home/analyzed_projects.html', context)
+
+def webinfo(request):
+    return render(request, 'home/web-info.html')
+
+def aboutApi(request):
+    return render(request, 'home/api-info.html')

@@ -13,6 +13,8 @@ urlpatterns = [
     path('results/<int:id>/diffExpr', views.diffExpr, name='diffExpr'),
     path('results/<int:id>/enrichment', views.enrichment, name='enrichment'),
     path('results/<int:id>/survivalAnalysis', views.survivalAnalysis, name='rnaExpr'),
+    path('webInfo', views.webinfo, name='webInfo'),
+    path('aboutApi', views.aboutApi, name='aboutApi'),
     
     #API
     path('api/studyCase', queries.StudyCaseViewSet.as_view() ),
