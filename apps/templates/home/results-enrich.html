@@ -37,6 +37,23 @@
         </h2>
         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionResults">
             <div class="accordion-body">
+                <p>Performs Gene Ontology (GO), Kyoto Encyclopedia of Genes and Genomes (KEGG) pathway and Disease Ontology (DO) enrichment analyses. The input list of genes to perform analysis are filtered by those whose differential expression pvalue are lower than 0.01 and the fold change is greater than 2.
+                <ul>
+                    <li><strong>Terms:</strong> GO, KEGG and DO terms.</li>
+                    <li><strong>Counts:</strong> The number of genes found to be enriched in the specified category or biological process.</li>
+                    <li><strong>GeneRatio:</strong> The ratio of the number of genes found to be enriched in the specified category or biological process to the total number of genes in the category or biological process.</li>
+                    <li><strong>BgRatio:</strong> The ratio of the number of genes found to be enriched in the specified category or biological process to the total number of genes in the background.</li>
+                    <li><strong>pValue:</strong> The p-value represents the probability of observing the enrichment by chance. A very low p-value suggests that the enrichment is statistically significant.</li>
+                    <li><strong>FDR:</strong> This is the adjusted p-value that accounts for multiple testing. A lower FDR indicates a higher level of significance, suggesting that the result is less likely due to chance.</li>
+                    <li><strong>foldEnrichment:</strong> This value represents how many times more genes were found in the category than would be expected by chance. A higher fold enrichment indicates stronger enrichment.</li>
+                    <li><strong>Category:</strong> The category or biological process in which the genes were found to be enriched.</li>
+                </ul>
+                By downloading this datatable you will get the following columns:
+                <ul>
+                    <li><strong>geneID:</strong>  A list of gene identifiers that are enriched in the specified category. These genes are associated with the biological process under investigation.</li>
+                    <li><strong>geneSymbol:</strong> The list of symbols of the gene id list.</li>
+                </ul>
+                </p>
                 <table id="diffExprDatatable" class="table table-bordered">
                     <thead>
                         <tr>
@@ -183,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         axios.get('/api/studyCase/'+{{id}}+'/enrichAnalysis')
             .then(response => {
                 results = response.data.results;
+                console.log(results)
                 //Loads datatble enrichment
                 const dataTable = $('#diffExprDatatable').DataTable({
                     scrollX: true,

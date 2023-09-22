@@ -39,6 +39,19 @@
         </h2>
         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionResults">
             <div class="accordion-body">
+                <p>Table with the results of the differential expression analysis comparing PrimaryTumor with SolidTissueNormal samples.
+                    <ul>
+                    <li><strong>Identifier:</strong> Gene identifier</li>
+                    <li><strong>Symbol:</strong> Gene symbol</li>
+                    <li><strong>Group:</strong> Group of the sample</li>
+                    <li><strong>BaseMean:</strong> This is the average expression level of the gene across all samples in the study. It serves as a reference point for comparing individual sample expression levels.</li>
+                    <li><strong>LogFC:</strong> Log fold change (log2FC). This is the log-transformed fold change in gene expression between the compared groups. It measures the magnitude and direction of the expression difference.</li>
+                    <li><strong>LfcSE:</strong> Log fold change standard error (lfcSE). This is the standard error of the log fold change.</li>
+                    <li><strong>Stat:</strong> The test statistic calculated to assess the significance of the difference in gene expression between groups. A larger absolute value indicates a stronger evidence of differential expression.</li>
+                    <li><strong>PValue:</strong> P-value. This is the probability that the observed log fold change could have occurred by chance.</li>
+                    <li><strong>FDR:</strong> False discovery rate (FDR). This is the probability that a gene with a given p-value is a false positive.</li>
+                    </ul>
+                </p>
                 <table id="diffExprDatatable" class="table table-bordered">
                     <thead>
                         <tr>
@@ -78,6 +91,7 @@
         </h2>
         <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionResults">
             <div class="accordion-body">
+                <p>Bar chart with the number of upregulated and downregulated genes in each group. The upregulated genes are those whose logFC are higher than 0 while downregulated are the ones below.</p>
                 <div id="bar-chart"> </div>
             </div>
         </div>
@@ -92,6 +106,7 @@
             <div id="corrPlotError" class="alert alert-danger" role="alert" style="display: none;">
             </div>
             <div class="accordion-body">
+                <p>Correlation plot between two genes. The plot shows the expression values of the genes in each sample. The red line is the linear regression line.</p>
                 {% include "includes/corrPlot.html" %}
             </div>
         </div>

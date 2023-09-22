@@ -41,8 +41,9 @@
                 <ul>
                     <li><strong>gene_id:</strong> identificator of the gene analyzed</li>
                     <li><strong>symbol:</strong> symbol of the gene analyzed</li>
-                    <li><strong>hr:</strong>.</li>
-                    <li><strong>Thresholds:</strong> are the values that the user can set to filter the genes. The user can set the threshold for the p-value and the log2(fold change).</li>
+                    <li><strong>hr:</strong>The Hazard Ratio (HR) is a measure of the relative risk or hazard of an event occurring (death) in one group (above the median value) compared to another group (below the median value).</li>
+                    <li><strong>lower95 and upper95:</strong> The Upper 95% Confidence Interval represents the upper bound of a range within which the true value of a parameter (such as HR) is likely to fall with 95% confidence. The same for the lower95 for the lower bound.</li>
+                    <li><strong>p_value:</strong> Whether there is a statistically significant difference in survival between two or more groups. A low p-value (typically less than 0.05) suggests that the observed differences are unlikely to be due to random chance.</li>
                 </ul>
                 <p>
                 <table id="diffExprDatatable" class="table table-bordered">
@@ -69,6 +70,7 @@
         </h2>
         <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
             <div class="accordion-body">
+                <p>A Kaplan-Meier survival plot for the gene selected. The plot shows the survival probability of the patients in the study case. By pressing the "config" button you can modify the plot by selecting the gene id to study, how to separate the groups (by the mean or median) and whether to filter or not by the sample type</p>
                 <button id="btnConfigureSurvivalPlot" class="btn btn-primary">Config</button>
                 <div id="popupSurvivalPlot" class="modal" tabindex="-1" role="dialog">
                     <div class="modal-dialog" role="document">
@@ -107,6 +109,8 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div id="survivalPlotError" class="alert alert-danger" role="alert" style="display: none;">
             </div>
             <div id="km-plot">
             </div>
@@ -244,12 +248,12 @@ function updateSurvivalPlot(gene_id, sep, sample_type) {
         url += '&sep='+sep
     }
     if (sample_type != "") {
-        url += '&sample_type_KMsurvival='+sample_type
+        url += '&sample_type='+sample_type
     }
     axios.get(url)
         .then( response => {
+            $('#survivalPlotError').hide()
             data = response.data;
-            console.log(data)
             if (sep == "") {
                 var data = {
                     x: Object.keys(data.data.survival_function).map(parseFloat),
@@ -279,7 +283,7 @@ function updateSurvivalPlot(gene_id, sep, sample_type) {
             
             // Definir el diseño del gráfico
             var layout = {
-                title: 'Survival Kaplan-Meier Plot',
+                title: 'Survival Kaplan-Meier Plot for ' + gene_id,
                 xaxis: {
                     title: 'Time',
                 },
@@ -291,7 +295,9 @@ function updateSurvivalPlot(gene_id, sep, sample_type) {
             
             Plotly.newPlot('km-plot', trace, layout); 
         }).catch(error => {
-            console.log(error);
+            var divError = $('#survivalPlotError');
+            divError.show();
+            divError.text('Select a valid gene')
         })
 }
 </script>

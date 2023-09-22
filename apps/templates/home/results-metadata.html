@@ -37,6 +37,7 @@
         </h2>
         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
             <div class="accordion-body">
+                <p>A datatable containing all the metadata information of the study case.</p>
                 <table id="metadataDatatable" class="table table-bordered">
                     <thead>
                         <tr>
@@ -72,16 +73,50 @@
         <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
             <div class="accordion-body">
                 <div class="row mb-3">
-                    <p>An statistical summary of metadata information. For every numeric atribute describes the mean, min value, max value and quantiles ignoring the null fields.</p>
-                <div class="row">
-                    <div class="col-md-4" id="age_at_diagnosis_div">
-                    </div>
-                    <div class="col-md-4" id="days_to_death_div">
-                    </div>
-                    <div class="col-md-4" id="days_to_last_follow_up_div">
+                    <p>An statistical summary of metadata information. </p>
+                    <p>For every categorical atribute describes the counts of each category ignoring the null fields.</p>
+                    <p>For every numeric atribute describes the mean, min value, max value and quantiles ignoring the null fields.</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card mb-3" id="genderCard">
+                                <div class="card-header">
+                                    <h3 class="card-title">Gender Counts</h3>
+                                </div>
+                                <div class="card-body">
+                                </div>
+                            </div>
+                        </div>
+            
+                        <div class="col-md-4">
+                            <div class="card mb-3" id="sampleTypeCard">
+                                <div class="card-header">
+                                    <h3 class="card-title">Sample Type Counts</h3>
+                                </div>
+                                <div class="card-body">
+                                </div>
+                            </div>
+                        </div>
+            
+                        <div class="col-md-4">
+                            <div class="card mb-3" id="vitalStatusCard">
+                                <div class="card-header">
+                                    <h3 class="card-title">Vital Status Counts</h3>
+                                </div>
+                                <div class="card-body">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+                    <div class="row">
+                        <div class="col-md-4" id="age_at_diagnosis_div">
+                        </div>
+                        <div class="col-md-4" id="days_to_death_div">
+                        </div>
+                        <div class="col-md-4" id="days_to_last_follow_up_div">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -91,13 +126,26 @@
 {% block javascripts %}
 <script>
 
+function countValues(arr, key) {
+    const counts = {};
+    for (const item of arr) {
+        const value = item[key];
+        if (counts[value]) {
+            counts[value]++;
+        } else {
+            counts[value] = 1;
+        }
+    }
+    return counts;
+}
+
 function getStatistics(data, field){
     var list = results.filter(entry => entry[field]!=null).map(entry => entry[field])
     var media = ss.mean(list)
     var min = ss.min(list)
     var max = ss.max(list)
     var cuartil25 = ss.quantile(list, 0.25);
-    var cuartil50 = ss.quantile(list, 0.50); // Equivalente a la mediana
+    var cuartil50 = ss.quantile(list, 0.50);
     var cuartil75 = ss.quantile(list, 0.75);
     var html = `
     <div class="card">
@@ -173,6 +221,23 @@ document.addEventListener('DOMContentLoaded', function() {
         getStatistics(results, 'age_at_diagnosis')
         getStatistics(results, 'days_to_death')
         getStatistics(results, 'days_to_last_follow_up')
+
+        const genderCounts = countValues(results, "gender");
+        const sampleTypeCounts = countValues(results, "sample_type");
+        const vitalStatusCounts = countValues(results, "vital_status");
+
+        // Función para mostrar los recuentos en las tarjetas
+        function displayCounts(elementId, counts) {
+            const cardBody = document.getElementById(elementId).getElementsByClassName("card-body")[0];
+            for (const key in counts) {
+                cardBody.innerHTML += `<p class="card-text">${key}: ${counts[key]}</p>`;
+            }
+        }
+
+        // Mostrar los resultados en las tarjetas
+        displayCounts("genderCard", genderCounts);
+        displayCounts("sampleTypeCard", sampleTypeCounts);
+        displayCounts("vitalStatusCard", vitalStatusCounts);
 
 
     }).catch(error => {
