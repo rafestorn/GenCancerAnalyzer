@@ -1,7 +1,9 @@
 from django.test import TestCase
-from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion
+from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion, SurvivalAnalysisResults
 from rest_framework.test import APIClient
 from datetime import datetime
+from .tasks import analisis
+
 
 # Create your tests here.
 
@@ -136,6 +138,26 @@ class APITestCase(TestCase):
             }
         )
 
+        self.survival1 = SurvivalAnalysisResults(
+            studyCase=self.StudyCase1,
+            gene_id='gene001',
+            symbol='GENE001',
+            hr = 1.0,
+            lower95 = 0.5,
+            upper95 = 1.5,
+            p_value = 0.05
+        )
+
+        self.survival2 = SurvivalAnalysisResults(
+            studyCase = self.StudyCase1,
+            gene_id = 'gene002',
+            symbol = 'GENE002',
+            hr = 2.0,
+            lower95 = 1.5,
+            upper95 = 2.5,
+            p_value = 0.1
+        )
+
         self.diffExpr1.save()
         self.diffExpr2.save()
 
@@ -147,6 +169,9 @@ class APITestCase(TestCase):
 
         self.rnaExpr1.save()
         self.rnaExpr2.save()
+
+        self.survival1.save()
+        self.survival2.save()
 
         self.client = APIClient()
     
@@ -163,6 +188,8 @@ class APITestCase(TestCase):
         self.enrich2 = None
         self.rnaExpr1 = None
         self.rnaExpr2 = None
+        self.survival1 = None
+        self.survival2 = None
         self.client = None
 
     def test_studycase_api(self):
@@ -248,3 +275,43 @@ class APITestCase(TestCase):
         response = self.client.get('/api/studyCase/'+ str(self.StudyCase1.id) +'/rnaExpression?genes_ids=gene001,gene002')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 2)
+    
+    def test_survival_api(self):
+        response = self.client.get('/api/studyCase/'+ str(self.StudyCase1.id) +'/survivalAnalysis')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 2)
+
+        response = self.client.get('/api/studyCase/'+ str(self.StudyCase1.id) +'/survivalAnalysis?orderBy=-hr')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['results'][0]['hr'] > response.data['results'][1]['hr'])
+
+
+class ApiRNAExpressionByGene(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.StudyCase1 = StudyCase(project="TCGA-CHOL", data_type="RNAseq")
+        self.StudyCase1.save()
+        analisis("TCGA-CHOL", "RNAseq", self.StudyCase1.id)
+        self.client = APIClient()
+
+    def setup(self):
+        self.StudyCase1 = None
+        self.client = None
+
+    def test_rnaexp_by_geneId(self):
+        response1 = self.client.get('/api/studyCase/'+ str(self.StudyCase1.id) +'/rnaExpression/ENSG00000123358')
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response1.data['gene_id'], 'ENSG00000123358')
+
+        response = self.client.get('/api/studyCase/'+ str(self.StudyCase1.id) +'/rnaExpression/ENSG00000123358?calculate_kmsurvival_function=true')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('survival_function' in response.data['data'])
+
+        response = self.client.get('/api/studyCase/'+ str(self.StudyCase1.id) +'/rnaExpression/ENSG00000123358?calculate_kmsurvival_function=true&show_metadata=true&sep=mean')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['threshold_formula'], 'mean')
+        self.assertTrue('metadata' in response.data['above_threshold']['TCGA-3X-AAVB-01'])
+
+        response = self.client.get('/api/studyCase/'+ str(self.StudyCase1.id) +'/rnaExpression/ENSG00000123358?sample_type=PrimaryTumor')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(len(response.data['data']) < len(response1.data['data']))
