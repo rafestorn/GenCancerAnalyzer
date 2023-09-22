@@ -294,7 +294,7 @@ class RNAexprCaseByGeneViewSet(APIView):
             openapi.Parameter('sep', openapi.IN_QUERY, description="Separates the data by the given threshold formula", type=openapi.TYPE_STRING, enum=['mean', 'median']),
             openapi.Parameter('show_metadata', openapi.IN_QUERY, description="Shows metadata", type=openapi.TYPE_BOOLEAN, enum=['true', 'false']),
             openapi.Parameter('calculate_kmsurvival_function', openapi.IN_QUERY, description="Calculates the Kaplan-Meier survival function", type=openapi.TYPE_BOOLEAN, enum=['true', 'false']),
-            openapi.Parameter('sample_type_KMsurvival', openapi.IN_QUERY, description="Filter by sample type", type=openapi.TYPE_STRING, enum=['PrimaryTumor', 'SolidTissueNormal']),
+            openapi.Parameter('sample_type', openapi.IN_QUERY, description="Filter by sample type", type=openapi.TYPE_STRING, enum=['PrimaryTumor', 'SolidTissueNormal']),
         ],
         responses={
             200: 'OK',
@@ -308,7 +308,7 @@ class RNAexprCaseByGeneViewSet(APIView):
             sep = request.query_params.get('sep')
             show_metadata = request.query_params.get('show_metadata')
             calculate_kmsurvival_function = request.query_params.get('calculate_kmsurvival_function')
-            sample_type_KMsurvival = request.query_params.get('sample_type_KMsurvival')
+            sample_type_KMsurvival = request.query_params.get('sample_type')
             if (sample_type_KMsurvival):
                 sample_ids_with_filter = MetaData.objects.filter(sample_type=sample_type_KMsurvival).values_list('sample', flat=True)
                 queryset.data = {key: value for key, value in queryset.data.items() if key in sample_ids_with_filter}
