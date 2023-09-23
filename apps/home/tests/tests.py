@@ -1,8 +1,8 @@
 from django.test import TestCase
-from .models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion, SurvivalAnalysisResults
+from ..models import StudyCase, MetaData, DiffExprAnalysisData, EnrichData, RNAExpresion, SurvivalAnalysisResults
 from rest_framework.test import APIClient
 from datetime import datetime
-from .tasks import analisis
+from ..tasks import analisis
 
 
 # Create your tests here.
