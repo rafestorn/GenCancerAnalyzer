@@ -28,7 +28,7 @@ def analisis(project_id, data_type, sc_id):
     sc.state = "DONE"
     sc.save()
 
-    remove_data(project_id, data_type)
+    # remove_data(project_id, data_type)
 
 def download(request):
     if statusGDCApi() == False:
