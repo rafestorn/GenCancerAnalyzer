@@ -90,6 +90,7 @@ def analyzedProjects(request):
     context = {
         'data': queryset,
         'projects': queryset.values_list('project', flat=True).distinct(),
+        'numAnalized':queryset.filter(state="DONE").count(),
     }
 
     return render(request, 'home/analyzed_projects.html', context)

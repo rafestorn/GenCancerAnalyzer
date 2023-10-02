@@ -3,6 +3,8 @@
 {% block title %} Analyzed Projects {% endblock title %}
 
 {% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 {% endblock stylesheets %}
 
 {% block content %}
@@ -62,4 +64,24 @@
 {% endblock content %}
 
 {% block javascripts %}
+
+<script>
+    $(document).ready(function() {
+        $('#project-select').select2();
+    });
+
+    function comprobarCondicion() {
+        axios.get('http://localhost:8000/api/studyCase?state=DONE')
+        .then(function (response) {
+            console.log(response.data.total_items != {{numAnalized}});
+            if (response.data.total_items != {{numAnalized}}) {
+                location.reload();
+            }
+        }).catch(function (error) {
+            console.log(error);
+        });
+    }
+
+    setInterval(comprobarCondicion, 8000);
+</script>
 {% endblock javascripts %}

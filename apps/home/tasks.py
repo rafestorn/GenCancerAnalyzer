@@ -11,9 +11,9 @@ import csv
 def analisis(project_id, data_type, sc_id):
     sc = StudyCase.objects.get(id=sc_id)
     base_dir = 'DATA/' + project_id +'/'+ data_type
-    if not os.path.exists(base_dir +'/data'):
-        downloadRNA(project_id, data_type)
     if not os.path.exists(base_dir + '/results'):
+        if not os.path.exists(base_dir +'/data'):
+            downloadRNA(project_id, data_type)
         analysisRNA(project_id, data_type)
 
     process_rna_expr_csv('DATA/' + project_id +'/'+ data_type+'/results/RNA_EXPR.csv', sc)
