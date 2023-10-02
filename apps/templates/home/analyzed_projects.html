@@ -71,9 +71,8 @@
     });
 
     function comprobarCondicion() {
-        axios.get('http://localhost:8000/api/studyCase?state=DONE')
+        axios.get('/api/studyCase?project={{project}}&data_type={{data_type}}&state=DONE')
         .then(function (response) {
-            console.log(response.data.total_items != {{numAnalized}});
             if (response.data.total_items != {{numAnalized}}) {
                 location.reload();
             }
