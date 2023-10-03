@@ -1,0 +1,305 @@
+{% extends 'layouts/base.html' %}
+
+{% load static %}
+
+{% block title %} Univariate Survival Results {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+  
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+
+{% endblock stylesheets %}
+
+{% block content %} 
+<div class="row justify-content-center mb-4">
+
+{% include 'includes/studyCaseInfoBlock.html' %}
+{% include 'includes/resultsBtn.html' %}
+
+</div>
+
+<div class="accordion mb-4" id="accordionResults">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Datatable
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionResults">
+            <div class="accordion-body">
+                <p>A datatable showing the results of a survival analysis by the Kaplan-Meier method separating low expression and high expression groups by the median. The analisis filters the "primarytumor" samples from metadata. The output fields are:</p>
+                <ul>
+                    <li><strong>gene_id:</strong> identificator of the gene analyzed</li>
+                    <li><strong>symbol:</strong> symbol of the gene analyzed</li>
+                    <li><strong>hr:</strong>The Hazard Ratio (HR) is a measure of the relative risk or hazard of an event occurring (death) in one group (above the median value) compared to another group (below the median value).</li>
+                    <li><strong>lower95 and upper95:</strong> The Upper 95% Confidence Interval represents the upper bound of a range within which the true value of a parameter (such as HR) is likely to fall with 95% confidence. The same for the lower95 for the lower bound.</li>
+                    <li><strong>p_value:</strong> Whether there is a statistically significant difference in survival between two or more groups. A low p-value (typically less than 0.05) suggests that the observed differences are unlikely to be due to random chance.</li>
+                </ul>
+                <p>
+                <table id="diffExprDatatable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>gene_id</th>
+                            <th>Symbol</th>
+                            <th>HR</th>
+                            <th>lower95</th>
+                            <th>upper95</th>
+                            <th>p_value</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            KM Survival Plot
+        </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+            <div class="accordion-body">
+                <p>A Kaplan-Meier survival plot for the gene selected. The plot shows the survival probability of the patients in the study case. By pressing the "config" button you can modify the plot by selecting the gene id to study, how to separate the groups (by the mean or median) and whether to filter or not by the sample type</p>
+                <button id="btnConfigureSurvivalPlot" class="btn btn-primary">Config</button>
+                <div id="popupSurvivalPlot" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Configurar Survival Plot</h5>
+                                <button id="closePopupSurvivalPlot" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="gene-id">Gene id:</label>
+                                    <input type="text" id="gene-id" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sep">Separator:</label>
+                                    <select id="sep" class="form-control">
+                                        <option value="median">Median</option>
+                                        <option value="mean">Mean</option>
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sample-type">Sample Type:</label>
+                                    <select id="sample-type" class="form-control">
+                                        <option value="">All</option>
+                                        <option value="PrimaryTumor">Primary Tumor</option>
+                                        <option value="SolidTissueNormal">Solid Tissue Normal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button id="btnSurvivalPlot" class="btn btn-primary">Update</button>
+                            </div>  
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="survivalPlotError" class="alert alert-danger" role="alert" style="display: none;">
+            </div>
+            <div id="km-plot">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+{% block javascripts %}
+<script>
+
+var currentUrl = window.location.pathname;
+
+var btnSurvival = document.getElementById('btn-survival');
+var btnEnrichment = document.getElementById('btn-enrich');
+
+function changeButtonColor(button, targetUrl) {
+    if (currentUrl === targetUrl) {
+        button.style.backgroundColor = 'rgb(82, 53, 92)';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    changeButtonColor(btnSurvival, '/results/{{id}}/survivalAnalysis');
+
+    axios.get('/api/studyCase/' + {{id}})
+    .then(response => {
+        studyCase = response.data;
+        if (studyCase.data_type == 'miRNAs') {
+            btnEnrichment.remove();
+        } 
+        var html = `
+            <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
+            `
+        projectHeader.innerHTML = html;
+        axios.get('https://api.gdc.cancer.gov/projects/' + studyCase.project)
+        .then(response => {
+            projectInfo = response.data.data;
+            var html = `
+                <p><strong>Name:</strong> ${projectInfo.name}</p>
+                <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+            `;
+            projectInfoContainer.innerHTML = html;
+        }).catch(error => {
+            var html = `
+            <p><strong>Unable to get project info</strong></p>
+            `;
+            projectInfoContainer.innerHTML = html;
+        })
+    })
+    .catch(error => {
+        var html = `
+            <p><strong>Unable to get project info</strong></p>
+        `
+    })
+})
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    axios.get('/api/studyCase/'+{{id}}+'/survivalAnalysis')
+        .then(response => {
+            results = response.data.results;
+            //Loads datatble enrichment
+            const dataTable = $('#diffExprDatatable').DataTable({
+                scrollX: true,
+                data: results,
+                columns: [
+                    { data: 'gene_id' },
+                    { data: 'symbol' },
+                    { data: 'hr'},
+                    { data: 'lower95'},
+                    { data: 'upper95'},
+                    { data: 'p_value'}
+                ],
+                dom: 'Bfrtip',
+                buttons: [
+                    'csv', 'excel'
+                ]
+            });
+
+            var genes_ids = results.map(entry => entry.gene_id)
+            $('#gene-id').typeahead({
+                source: genes_ids
+            });
+            $("#gene-id").val(results[0].gene_id);
+
+            const btnSurvivalPlot = document.getElementById('btnSurvivalPlot');
+            const btnConfigureSurvivalPlot = document.getElementById('btnConfigureSurvivalPlot'); 
+            const closeButtonSurvivalPlot = document.getElementById('closePopupSurvivalPlot');
+            const popupSurvivalPlot = document.getElementById("popupSurvivalPlot");
+            const geneInput = document.getElementById("gene-id");
+            const sepInput = document.getElementById("sep");
+            const sampleTypeInput = document.getElementById("sample-type");
+        
+            updateSurvivalPlot(geneInput.value, sepInput.value, sampleTypeInput.value)
+        
+            btnSurvivalPlot.addEventListener("click", function() {
+                updateSurvivalPlot(geneInput.value, sepInput.value, sampleTypeInput.value);
+                popupSurvivalPlot.classList.remove("show");
+                popupSurvivalPlot.style.display = "none";
+            });
+        
+            btnConfigureSurvivalPlot.addEventListener("click", function() {
+                popupSurvivalPlot.classList.add("show");
+                popupSurvivalPlot.style.display = "block";
+            });
+        
+            closeButtonSurvivalPlot.addEventListener("click", function() {
+                popupSurvivalPlot.classList.remove("show");
+                popupSurvivalPlot.style.display = "none";
+            });
+
+            $('#accordionResults').on('shown.bs.collapse', function (event) {
+                const targetId = event.target.id;
+                
+                // Redimensionar el gráfico si es el gráfico de volcanoPlot
+                if (targetId === 'collapseTwo') {
+                    Plotly.Plots.resize('km-plot');
+                }
+            });
+        }).catch(error => {
+            console.log(error);
+        })
+})
+
+function updateSurvivalPlot(gene_id, sep, sample_type) {
+    
+    url = '/api/studyCase/'+{{id}}+'/rnaExpression/'+gene_id+'?calculate_kmsurvival_function=true'
+    if (sep != "") {
+        url += '&sep='+sep
+    }
+    if (sample_type != "") {
+        url += '&sample_type='+sample_type
+    }
+    axios.get(url)
+        .then( response => {
+            $('#survivalPlotError').hide()
+            data = response.data;
+            if (sep == "") {
+                var data = {
+                    x: Object.keys(data.data.survival_function).map(parseFloat),
+                    y: Object.values(data.data.survival_function),
+                    mode: 'lines',
+                    name: 'Above Threshold',
+                };
+                var trace = [data];
+            }
+            else{
+                var aboveThresholdData = {
+                    x: Object.keys(data.above_threshold.survival_function).map(parseFloat),
+                    y: Object.values(data.above_threshold.survival_function),
+                    mode: 'lines',
+                    name: 'Above Threshold',
+                };
+                
+                // Datos de abajo del umbral
+                var belowThresholdData = {
+                    x: Object.keys(data.below_threshold.survival_function).map(parseFloat),
+                    y: Object.values(data.below_threshold.survival_function),
+                    mode: 'lines',
+                    name: 'Below Threshold',
+                };
+                var trace = [aboveThresholdData, belowThresholdData];
+            }
+            
+            // Definir el diseño del gráfico
+            var layout = {
+                title: 'Survival Kaplan-Meier Plot for ' + gene_id,
+                xaxis: {
+                    title: 'Time',
+                },
+                yaxis: {
+                    title: 'Survival Probability',
+                    range: [0, 1],
+                },
+            };
+            
+            Plotly.newPlot('km-plot', trace, layout); 
+        }).catch(error => {
+            var divError = $('#survivalPlotError');
+            divError.show();
+            divError.text('Select a valid gene')
+        })
+}
+</script>
+
+{% endblock javascripts %}

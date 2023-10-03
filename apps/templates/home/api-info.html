@@ -1,0 +1,122 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Web Info {% endblock title %}
+
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+<h1 class="display-4 text-center">GenCancerAnalyzerAPI</h1>
+<p> This is a RESTful API for GenCancerAnalyzer where you can query the results of the analisis.</p>
+<p> Try out the endpoints with <a class="btn btn-outline-primary" href="/swagger/">SWAGGER</a> or <a href="/redoc/" class="btn btn-outline-secondary">REDOC</a></p>
+
+<h2 class="mt-4">Endpoints</h2>
+<p>Here is a summary of the Endpoints of the API:</p>
+
+<!-- /api/StudyCase -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase</h5>
+        <p class="card-text">Get a list of studyCase.</p>
+        <ul>
+            <li><strong>id:</strong> Filter by id</li>
+            <li><strong>project:</strong> Filter by project</li>
+            <li><strong>data_type:</strong> Filter by datatype ('RNAseq' or 'miRNAs')</li>
+            <li><strong>state:</strong> Filter by state ('DONE' or 'ANALISIS')</li>
+            <li><strong>page:</strong> Page number</li>
+            <li><strong>maxItems:</strong> Number of results per page</li>
+    </div>
+</div>
+
+<!-- /api/StudyCase/{id} -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase/{id}</h5>
+        <p class="card-text">Get a Study Case by id</p>
+    </div>
+</div>
+
+<!-- /api/StudyCase/{id}/metadata -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase/{id}/metadata</h5>
+        <p class="card-text">Get the metadata of the specified studyCase.</p>
+        <ul>
+            <li><strong>page:</strong> Page number</li>
+            <li><strong>maxItems:</strong> Number of results per page</li>
+        </ul>
+    </div>
+</div>
+
+<!-- /api/StudyCase/{id}/rnaExpression -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase/{id}/rnaExpression</h5>
+        <p class="card-text">Get the voom normalized values of genes of the specified studyCase.</p>
+        <ul>
+            <li><strong>genes_ids:</strong> List of comma-separated genes_ids to filter</li>
+            <li><strong>page:</strong> Page number</li>
+            <li><strong>maxItems:</strong> Number of results per page</li>
+        </ul>
+    </div>
+</div>
+
+<!-- /api/StudyCase/{id}/rnaExpression/{gene_id} -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase/{id}/rnaExpression/{gene_id}</h5>
+        <p class="card-text">Get the voom normalized values of the specified gene and studyCase.</p>
+        <ul>
+            <li><strong>sep:</strong> List of comma-separated mirnas_ids to filter</li>
+            <li><strong>show_metadata:</strong> Set true to expand the JSON with the metadata info.</li>
+            <li><strong>calculate_kmsurvival_function:</strong> Return km survival function</li>
+            <li><strong>sample_type:</strong> Filter samples by the specified sample type</li>
+        </ul>
+    </div>
+</div>
+
+<!-- /api/StudyCase/{id}/differentialExpression -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase/{id}/differentialExpression</h5>
+        <p class="card-text">Get the differential expression values of the specified studyCase.</p>
+        <ul>
+            <li><strong>order_by:</strong> Attribute by which the results are sorted</li>
+            <li><strong>group:</strong> Filter by group</li>
+            <li><strong>page:</strong> Page number</li>
+            <li><strong>maxItems:</strong> Number of results per page</li>
+        </ul>
+    </div>
+</div>
+
+<!-- /api/StudyCase/{id}/enrichAnalysis -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase/{id}/enrichAnalysis</h5>
+        <p class="card-text">Get the enrichment analysis results of the specified studyCase.</p>
+        <ul>
+            <li><strong>order_by:</strong> Attribute by which the results are sorted</li>
+            <li><strong>category:</strong> Filter by category</li>
+            <li><strong>page:</strong> Page number</li>
+            <li><strong>maxItems:</strong> Number of results per page</li>
+        </ul>
+    </div>
+</div>
+
+<!-- /api/StudyCase/{id}/survivalAnalysis -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">/api/StudyCase/{id}/survivalAnalysis</h5>
+        <p class="card-text">Get the survival analysis results of the specified studyCase.</p>
+        <ul>
+            <li><strong>order_by:</strong> Attribute by which the results are sorted</li>
+            <li><strong>page:</strong> Page number</li>
+            <li><strong>maxItems:</strong> Number of results per page</li>
+        </ul>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+{% endblock javascripts %}

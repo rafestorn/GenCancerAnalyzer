@@ -1,0 +1,113 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Dashboard {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header text-center">
+                        Select the project
+                </div>
+                <div class="card-body">
+                    <form action="analysis" method="POST" style="background-color: rgb(255, 255, 255);">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.data_type.label_tag }}
+                            {{ form.data_type }}
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                {{ form.projects.label_tag }}
+                                {{ form.projects }}
+                            </div>
+                            <div class="col-md-4 mt-4">
+                                <button type="submit" class="btn btn-outline-primary" id="btnAnalyze">Analyze</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    Selected Project Information
+                </div>
+                <div class="card-body" id="projectInfoContainer">
+                    <div class="info" id="isAnalyzed"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    const selectProjectId = document.getElementById('id_projects');
+    const btnAnalyze = document.getElementById('btnAnalyze');
+    const selectDatatype = document.getElementById('id_data_type');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (selectProjectId.disabled) {
+            btnAnalyze.disabled = true;
+            var html = `
+                <p><strong>Unable to get project info</strong></p>
+                <p>Try again later</p>
+            `
+            projectInfoContainer.innerHTML = html;
+        }
+        $('#id_projects').select2();
+        $('#id_projects, #id_data_type').on('change', function() {
+            var selectedProjectId = selectProjectId.value;
+            var selectedDataType = selectDatatype.value;
+
+            axios.get('https://api.gdc.cancer.gov/projects/' + selectedProjectId)
+            .then(respones => {
+                projectInfo = respones.data.data;
+                var html = `
+                    <p><strong>Name:</strong> ${projectInfo.name}</p>
+                    <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                    <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                    <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                    <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+                `;
+                axios.get('/api/studyCase?project=' + selectedProjectId+'&data_type='+selectedDataType) 
+                .then(response2 => {
+                    if (response2.data.total_items == 0)  {
+                        var html2 = `
+                        <p style="color: red;"><strong>Not analyzed</strong></p>
+                        `;
+                    } else {
+                        if (response2.data.results[0].state == 'ANALISIS') {
+                            var html2 = `
+                            <p style="color: orange;"><strong>Analysis in progress</strong></p>
+                            `;
+                        } else {
+                            var html2 = `
+                            <p style="color: green;"><strong>Already analyzed</strong></p>
+                            `;
+                        }
+                    }
+                    projectInfoContainer.innerHTML = html+html2;
+                }).catch(error => {
+                    console.log(error)
+                })
+            })
+            .catch(error => {
+                var html = `
+                    <p><strong>Unable to get project info</strong></p>
+                `
+            })
+        })
+    })
+
+</script>
+{% endblock javascripts %}

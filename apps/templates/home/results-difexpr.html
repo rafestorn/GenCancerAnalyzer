@@ -1,0 +1,541 @@
+{% extends 'layouts/base.html' %}
+
+{% load static %}
+
+{% block title %} Differential Expression Resuslts {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css" />
+  
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/regression/2.0.1/regression.min.js"></script>
+
+
+{% endblock stylesheets %}
+
+{% block content %} 
+<div class="row justify-content-center mb-4">
+
+    {% include 'includes/studyCaseInfoBlock.html' %}
+    {% include 'includes/resultsBtn.html' %}
+    
+</div>
+
+<div class="accordion mb-4" id="accordionResults">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Datatable Diferential Expression
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionResults">
+            <div class="accordion-body">
+                <p>Table with the results of the differential expression analysis comparing PrimaryTumor with SolidTissueNormal samples.
+                    <ul>
+                    <li><strong>Identifier:</strong> Gene identifier</li>
+                    <li><strong>Symbol:</strong> Gene symbol</li>
+                    <li><strong>Group:</strong> Group of the sample</li>
+                    <li><strong>BaseMean:</strong> This is the average expression level of the gene across all samples in the study. It serves as a reference point for comparing individual sample expression levels.</li>
+                    <li><strong>LogFC:</strong> Log fold change (log2FC). This is the log-transformed fold change in gene expression between the compared groups. It measures the magnitude and direction of the expression difference.</li>
+                    <li><strong>LfcSE:</strong> Log fold change standard error (lfcSE). This is the standard error of the log fold change.</li>
+                    <li><strong>Stat:</strong> The test statistic calculated to assess the significance of the difference in gene expression between groups. A larger absolute value indicates a stronger evidence of differential expression.</li>
+                    <li><strong>PValue:</strong> P-value. This is the probability that the observed log fold change could have occurred by chance.</li>
+                    <li><strong>FDR:</strong> False discovery rate (FDR). This is the probability that a gene with a given p-value is a false positive.</li>
+                    </ul>
+                </p>
+                <table id="diffExprDatatable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Identifier</th>
+                            <th>Symbol</th>
+                            <th>Group</th>
+                            <th>BaseMean</th>
+                            <th>LogFC</th>
+                            <th>LfcSE</th>
+                            <th>Stat</th>
+                            <th>PValue</th>
+                            <th>FDR</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            Volcano Plot
+        </button>
+        </h2>
+        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionResults">
+            <div class="accordion-body">
+                {%include "includes/volcanoPlot.html"%}
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                Bar chart
+            </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionResults">
+            <div class="accordion-body">
+                <p>Bar chart with the number of upregulated and downregulated genes in each group. The upregulated genes are those whose logFC are higher than 0 while downregulated are the ones below.</p>
+                <div id="bar-chart"> </div>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingFour">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                Correlation between genes 
+            </button>
+        </h2>
+        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionResults">
+            <div id="corrPlotError" class="alert alert-danger" role="alert" style="display: none;">
+            </div>
+            <div class="accordion-body">
+                <p>Correlation plot between two genes. The plot shows the expression values of the genes in each sample. The red line is the linear regression line.</p>
+                {% include "includes/corrPlot.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    //Changes color of the button if the user is in the same page
+
+    var currentUrl = window.location.pathname;
+
+    var btnDiffExpr = document.getElementById('btn-diffExpr');
+    var btnEnrichment = document.getElementById('btn-enrich');
+
+    function changeButtonColor(button, targetUrl) {
+        if (currentUrl === targetUrl) {
+            button.style.backgroundColor = 'rgb(82, 53, 92)';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        changeButtonColor(btnDiffExpr, '/results/{{id}}/diffExpr');
+        axios.get('/api/studyCase/' + {{id}})
+        .then(response => {
+            studyCase = response.data;
+            if (studyCase.data_type === 'miRNAs') {
+                btnEnrichment.remove();
+            }
+            var html = `
+                <p><strong>${studyCase.project} - ${studyCase.data_type}</strong></p>
+                `
+            projectHeader.innerHTML = html;
+            axios.get('https://api.gdc.cancer.gov/projects/' + studyCase.project)
+            .then(response => {
+                projectInfo = response.data.data;
+                var html = `
+                    <p><strong>Name:</strong> ${projectInfo.name}</p>
+                    <p><strong>Project ID:</strong> ${projectInfo.project_id}</p>
+                    <p><strong>Disease Type:</strong> ${projectInfo.disease_type.join(', ')}</p>
+                    <p><strong>Primary Site:</strong> ${projectInfo.primary_site.join(', ')}</p>
+                    <p><strong>DB Gap Accession Number:</strong> ${projectInfo.dbgap_accession_number}</p>
+                `;
+                projectInfoContainer.innerHTML = html;
+            }).catch(error => {
+                var html = `
+                <p><strong>Unable to get project info</strong></p>
+                `;
+                projectInfoContainer.innerHTML = html;
+            })
+        })
+        .catch(error => {
+            var html = `
+                <p><strong>Unable to get project info</strong></p>
+            `
+        })
+    })
+</script>
+
+<script>
+    const btnVolcanoPlot = document.getElementById('btnVolcanoPlot');
+    const btnConfigureVolcanoPlot = document.getElementById('btnConfigureVolcanoPlot'); 
+    const closeButtonVolcanoPlot = document.getElementById('closePopupVolcanoPlot');
+    const popupVolcanoPlot = document.getElementById("popupVolcanoPlot");
+    const pvalueInput = document.getElementById("pvalue-threshold");
+    const logfcInput = document.getElementById("logfc-threshold");
+    var gene1input = document.getElementById("autocompleteInputGene1")
+    var gene2input = document.getElementById("autocompleteInputGene2")
+    const threshold_pvalue = 0.05;
+    const threshold_logfc = 2;
+
+    const volcanoPlotlayout = {
+    title: 'Volcano Plot',
+    xaxis: {
+        title: 'Fold Change (log2FC)',
+        showline: true,
+        showgrid: false
+    },
+    yaxis: {
+        title: '-log10(FDR corrected - PValue)',
+        showline: true,
+        showgrid: false
+    },
+    legend: {
+        orientation: 'h',
+        xanchor: 0.9,
+        y: 1.2
+    },
+    shapes: [
+        {
+        type: 'line',
+        x0: -threshold_logfc,
+        y0: 0,
+        x1: -threshold_logfc,
+        y1: 30,
+        line: {
+            color: 'gray',
+            dash: 'dash'
+        }
+        },
+        {
+        type: 'line',
+        x0: threshold_logfc,
+        y0: 0,
+        x1: threshold_logfc,
+        y1: 30,
+        line: {
+            color: 'gray',
+            dash: 'dash'
+        }
+        },
+        {
+        type: 'line',
+        x0: -10,
+        y0: -1 * Math.log10(threshold_pvalue),
+        x1: 10,
+        y1: -1 * Math.log10(threshold_pvalue),
+        line: {
+            color: 'gray',
+            dash: 'dash'
+        }
+        }
+    ]
+    };
+
+    function createTrace(data, color, nameTrace) {
+    return {
+        x: data.map(row => row.logFC),
+        y: data.map(row => -1 * Math.log10(row.PValue)),
+        mode: 'markers',
+        text: data.map(row => row.symbol),
+        marker: {
+        color: color
+        },
+        type: 'scatter',
+        name: nameTrace,
+    };
+    }
+
+    function updateVolcanoPlot(data, pvalueThresholdinput, logfcThresholdinput) {
+        const significant_genes = data.filter(row => 
+            (row.PValue < pvalueThresholdinput) && 
+            (Math.abs(row.logFC) > logfcThresholdinput)
+        );
+
+        non_singnificant_genes = data.filter(row => 
+            (row.PValue >= pvalueThresholdinput) || 
+            (Math.abs(row.logFC) <= logfcThresholdinput)
+        );
+
+        const trace_non_significant = createTrace(non_singnificant_genes, 'blue', 'No significant genes');
+        const trace_significant = createTrace(significant_genes,'red', 'Significant genes');
+
+        volcanoPlotlayout.shapes[0].x0 = -logfcThresholdinput;
+        volcanoPlotlayout.shapes[0].x1 = -logfcThresholdinput;
+        volcanoPlotlayout.shapes[1].x1 = logfcThresholdinput;
+        volcanoPlotlayout.shapes[1].x0 = logfcThresholdinput;
+        volcanoPlotlayout.shapes[2].y1 = -1 * Math.log10(pvalueThresholdinput);
+        volcanoPlotlayout.shapes[2].y0 = -1 * Math.log10(pvalueThresholdinput);
+
+        const plotDiv = 'volcanoPlot';
+        Plotly.purge(plotDiv);
+        Plotly.newPlot(plotDiv, [trace_non_significant, trace_significant], volcanoPlotlayout, {responsive: true});
+    }
+
+    function preparedtaBarChart(data){
+        const counts = new Map();
+
+        data.forEach(entry => {
+            const group = entry.group;
+            const regulation = entry.logFC > 0 ? 'upregulated' : 'downregulated';
+
+            // Generate a key for the map
+            const key = `${group}-${regulation}`;
+
+            if (!counts.has(key)) {
+                counts.set(key, 1);
+            } else {
+                counts.set(key, counts.get(key) + 1);
+            }
+        });
+
+        // Convert map to an array of objects
+        const groupedData = [...counts].map(([key, count]) => {
+            const [group, regulation] = key.split('-');
+            return { group, regulation, count };
+        });
+
+        return groupedData
+    }
+
+    function updateBarChart(data){
+    
+        groupedData = preparedtaBarChart(data)
+
+        const uniqueGroups = [...new Set(groupedData.map(entry => entry.group))];
+
+        const xValues = [];
+        const yValuesUpregulated = [];
+        const yValuesDownregulated = [];
+
+        uniqueGroups.forEach(group => {
+            const upregulatedEntry = groupedData.find(entry => entry.group === group && entry.regulation === 'upregulated');
+            const downregulatedEntry = groupedData.find(entry => entry.group === group && entry.regulation === 'downregulated');
+
+            xValues.push(group);
+            yValuesUpregulated.push(upregulatedEntry ? upregulatedEntry.count : 0);
+            yValuesDownregulated.push(downregulatedEntry ? downregulatedEntry.count : 0);
+        });
+
+        const traceUpregulated = {
+            x: xValues,
+            y: yValuesUpregulated,
+            name: 'Upregulated',
+            type: 'bar'
+        };
+
+        const traceDownregulated = {
+            x: xValues,
+            y: yValuesDownregulated,
+            name: 'Downregulated',
+            type: 'bar'
+        };
+
+        const dataTraces = [traceUpregulated, traceDownregulated];
+
+        const layout = {
+            yaxis: { title: 'Nº of differentially expressed genes' },
+            legend: {
+                orientation: 'h',
+                x: 0.8,
+                y: 1
+            },
+        };
+
+        Plotly.newPlot('bar-chart', dataTraces, layout, {responsive: true});
+        Plotly.Plots.resize('bar-chart')
+
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+
+    pvalueInput.value = threshold_pvalue;
+    logfcInput.value = threshold_logfc;
+
+    
+    axios.get('/api/studyCase/'+{{id}}+'/differentialExpression')
+        .then(response => {
+            results = response.data.results;
+            $(document).ready(function() {
+                const dataTable = $('#diffExprDatatable').DataTable({
+                scrollX: true,
+                data: results,
+                columns: [
+                    { data: 'gene_id' },
+                    { data: 'symbol' },
+                    { data: 'group' },
+                    { data: 'baseMean'},
+                    { data: 'logFC'},
+                    { data: 'lfcSE'},
+                    { data: 'stat'},
+                    { data: 'PValue'},
+                    { data: 'FDR'}
+                ],
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'print'
+                ]
+                });
+            });
+            
+            var genes_ids = results.map(entry => entry.gene_id)
+            $('#autocompleteInputGene1').typeahead({
+                source: genes_ids
+            });
+            $('#autocompleteInputGene2').typeahead({
+                source: genes_ids
+            });
+            
+            $("#autocompleteInputGene1").val(results[0].gene_id);
+            $("#autocompleteInputGene2").val(results[1].gene_id);
+
+            updateCorrPlot(results[0].gene_id, results[1].gene_id)
+
+            results.sort((a, b) => a.PValue - b.PValue);
+            updateVolcanoPlot(results, threshold_pvalue, threshold_logfc);
+            updateBarChart(results)
+
+            btnVolcanoPlot.addEventListener("click", function() {
+                updateVolcanoPlot(results, parseFloat(pvalueInput.value), parseFloat(logfcInput.value));
+                popupVolcanoPlot.classList.remove("show");
+                popupVolcanoPlot.style.display = "none";
+            });
+
+            btnConfigureVolcanoPlot.addEventListener("click", function() {
+                popupVolcanoPlot.classList.add("show");
+                popupVolcanoPlot.style.display = "block";
+            });
+
+            closeButtonVolcanoPlot.addEventListener("click", function() {
+                popupVolcanoPlot.classList.remove("show");
+                popupVolcanoPlot.style.display = "none";
+            });
+
+            btnCorrPlot.addEventListener("click", function() {
+                updateCorrPlot(gene1input.value, gene2input.value);
+                popupCorrPlot.classList.remove("show");
+                popupCorrPlot.style.display = "none";
+            });
+
+            btnConfigureCorrPlot.addEventListener("click", function() {
+                popupCorrPlot.classList.add("show");
+                popupCorrPlot.style.display = "block";
+            });
+
+            closeButtonCorrPlot.addEventListener("click", function() {
+                popupCorrPlot.classList.remove("show");
+                popupCorrPlot.style.display = "none";
+            });
+
+            $('#accordionResults').on('shown.bs.collapse', function (event) {
+                const targetId = event.target.id;
+                
+                // Redimensionar el gráfico si es el gráfico de barra
+                if (targetId === 'collapseThree') {
+                    Plotly.Plots.resize('bar-chart');
+                }
+                
+                // Redimensionar el gráfico si es el gráfico de volcanoPlot
+                if (targetId === 'collapseTwo') {
+                    Plotly.Plots.resize('volcanoPlot');
+                }
+
+                if (targetId === 'collapseFour') {
+                    Plotly.Plots.resize('corr-plot')
+                }
+            });
+        }).catch(function(error) {
+            console.error('Error al obtener los datos:', error);
+        });
+        
+    });
+
+    const btnCorrPlot = document.getElementById('btnCorrPlot');
+    const btnConfigureCorrPlot = document.getElementById('btnConfigureCorrPlot'); 
+    const closeButtonCorrPlot = document.getElementById('closePopupCorrPlot');
+    const popupCorrPlot = document.getElementById("popupCorrPlot");
+
+    //Updates the correlation plot given the genes ids selected
+    function updateCorrPlot(gen1, gen2) {
+        axios.get("/api/studyCase/" + {{id}} + "/rnaExpression?genes_ids=" + gen1 +","+gen2)
+        .then(response => {
+            $('#corrPlotError').hide()
+            resultsCorr = response.data.results
+            updateScatterPlot(resultsCorr)
+
+        })
+        .catch(function(error) {
+            var divError = $('#corrPlotError');
+            divError.show();
+            divError.text('Select a valid gene')
+        })
+    }
+
+    //Creates the correlation plot
+    function updateScatterPlot(data){
+        const geneNames = [data[0].gene_id, data[1].gene_id];
+        const xValues = Object.values(data[0].data);
+        const yValues = Object.values(data[1].data);
+
+        // Crear un scatter plot
+        const trace = {
+        x: xValues,
+        y: yValues,
+        text: Object.keys(data[0].data), // Nombres de los puntos
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Value'
+        };
+
+        const trendline = {
+            type: 'scatter',
+            mode: 'lines',
+            x: xValues,
+            y: calculateTrendline(xValues, yValues),
+            name: 'Línea de Regresión lineal',
+            line: { color: 'red' }
+        };
+
+        const layout = {
+        xaxis: {
+            title: geneNames[0] // Nombre del gen para el eje X
+        },
+        yaxis: {
+            title: geneNames[1] // Nombre del gen para el eje Y
+        },
+        legend: {
+            orientation: 'h',
+            xanchor: 0.9,
+            y: 1.2
+        },
+        };
+
+        // Crear el gráfico
+        Plotly.newPlot('corr-plot', [trace, trendline], layout, {responsive: true});
+    }
+
+    function calculateTrendline(xValues, yValues) {
+        // Crear un arreglo de puntos (x, y) para la regresión lineal
+        const data = xValues.map((x, index) => [x, yValues[index]]);
+        
+        // Realizar el cálculo de la regresión lineal
+        const result = regression.linear(data);
+        
+        // Obtener los coeficientes de la línea de tendencia
+        const gradient = result.equation[0]; // Pendiente (m)
+        const yIntercept = result.equation[1]; // Intersección en Y (b)
+        
+        // Calcular los valores Y correspondientes a los valores X (para la línea de tendencia)
+        const trendlineYValues = xValues.map(x => gradient * x + yIntercept);
+        
+        return trendlineYValues;
+    }
+    
+
+    // Configuración del gráfico
+    var genes = ["ENSG00000103569", "ENSG00000118271"];
+   
+</script>
+
+{% endblock javascripts %}
