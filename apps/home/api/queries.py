@@ -28,6 +28,7 @@ class StudyCaseViewSet(APIView):
             openapi.Parameter('id', openapi.IN_QUERY, description="Filter by id", type=openapi.TYPE_INTEGER),
             openapi.Parameter('project', openapi.IN_QUERY, description="Filter by project", type=openapi.TYPE_STRING),
             openapi.Parameter('data_type', openapi.IN_QUERY, description="Filter by data type", type=openapi.TYPE_STRING, enum=['RNAseq', 'miRNAs']),
+            openapi.Parameter('state', openapi.IN_QUERY, description="Filter by state", type=openapi.TYPE_STRING, enum=['DONE', 'ANALISIS']),
             openapi.Parameter('maxItems', openapi.IN_QUERY, description="Max number of items in a query", type=openapi.TYPE_INTEGER, minimum=1),
             openapi.Parameter('page', openapi.IN_QUERY, description="Page", type=openapi.TYPE_INTEGER, minimum=1),
         ]
@@ -38,6 +39,7 @@ class StudyCaseViewSet(APIView):
         page = request.query_params.get('page')
         project = request.query_params.get('project')
         data_type = request.query_params.get('data_type')
+        state = request.query_params.get('state')
 
         if page is None:
             page = 1
@@ -52,6 +54,9 @@ class StudyCaseViewSet(APIView):
         
         if data_type:
             queryset = queryset.filter(data_type=data_type)
+
+        if state:
+            queryset = queryset.filter(state=state)
 
         pag_queryset = paginate_queryset(queryset, page, max_items)
 

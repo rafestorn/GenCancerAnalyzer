@@ -83,14 +83,21 @@ def analyzedProjects(request):
 
     if project:
         queryset = queryset.filter(project=project)
+    else:
+        project = ""
 
     if data_type:
         queryset = queryset.filter(data_type=data_type)
+    else:
+        data_type = ""
+    
 
     context = {
         'data': queryset,
         'projects': queryset.values_list('project', flat=True).distinct(),
         'numAnalized':queryset.filter(state="DONE").count(),
+        'project': project,
+        'data_type': data_type
     }
 
     return render(request, 'home/analyzed_projects.html', context)

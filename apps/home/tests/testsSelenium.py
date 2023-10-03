@@ -18,7 +18,7 @@ class SeleniumTest(StaticLiveServerTestCase):
         self.StudyCase2 = StudyCase(project="TCGA-CHOL", data_type="miRNAs")
         self.StudyCase2.save()
         options = webdriver.FirefoxOptions()
-        options.headless = False  
+        options.headless = True  
         driver = webdriver.Firefox(options=options)
         self.driver = driver
 
@@ -50,14 +50,15 @@ class SeleniumTest(StaticLiveServerTestCase):
         self.driver.close()
 
     def test_filter_analyzed_projects(self):
-        self.driver.get(f'{self.live_server_url}/')
+        self.driver.get(f'{self.live_server_url}')
         self.driver.set_window_size(720, 700)
         self.driver.find_element(By.CSS_SELECTOR, ".navbar-toggler-icon").click()
         self.driver.find_element(By.LINK_TEXT, "Analyzed Projects").click()
-        self.driver.find_element(By.ID, "project-select").click()
-        dropdown = self.driver.find_element(By.ID, "project-select")
-        dropdown.find_element(By.XPATH, "//option[. = 'TCGA-CHOL']").click()
-        self.driver.find_element(By.CSS_SELECTOR, "#project-select > option:nth-child(2)").click()
+        sleep(3)
+        self.driver.find_element(By.ID, "select2-project-select-container").click()
+        self.driver.find_element(By.CSS_SELECTOR, ".select2-search__field").click()
+        self.driver.find_element(By.CSS_SELECTOR, ".select2-search__field").send_keys("tcga-chol")
+        self.driver.find_element(By.CSS_SELECTOR, ".select2-search__field").send_keys(Keys.ENTER)
         self.driver.find_element(By.CSS_SELECTOR, ".btn-block").click()
 
         self.assertTrue(len(self.driver.find_elements(By.CLASS_NAME, "card-body")), 2)
@@ -147,7 +148,7 @@ class SeleniumTestWithAnalisis(StaticLiveServerTestCase):
         self.StudyCase1 = StudyCase(project="TCGA-CHOL", data_type="RNAseq")
         self.StudyCase1.save()
         options = webdriver.FirefoxOptions()
-        options.headless = False  
+        options.headless = True  
         driver = webdriver.Firefox(options=options)
         self.driver = driver
 
@@ -165,7 +166,7 @@ class SeleniumTestWithAnalisis(StaticLiveServerTestCase):
         
         self.driver.get(f'{self.live_server_url}/results/'+str(self.StudyCase1.id)+'/metadata')
 
-        sleep(3.0) # wait for load scripts
+        sleep(8.0) # wait for load scripts
 
         tabla = self.driver.find_element(By.ID, 'metadataDatatable')
         td_elements = tabla.find_elements(By.CSS_SELECTOR, 'tr')
@@ -211,8 +212,8 @@ class SeleniumTestWithAnalisis(StaticLiveServerTestCase):
         ###################### Results diffExpr #############################
 
         self.driver.get(f'{self.live_server_url}/results/'+str(self.StudyCase1.id)+'/diffExpr')
-        sleep(6.0) # wait for load scripts
-
+        sleep(8.0) # wait for load scripts
+   
         tabla = self.driver.find_element(By.ID, 'diffExprDatatable')
         td_elements = tabla.find_elements(By.CSS_SELECTOR, 'tr')
         self.assertEqual(len(td_elements), 11) # 10 + header
@@ -221,7 +222,7 @@ class SeleniumTestWithAnalisis(StaticLiveServerTestCase):
         self.driver.execute_script("arguments[0].click();",btn)
         sleep(2)
 
-        self.driver.execute_script("window.scrollBy(0, 500);")
+        self.driver.execute_script("window.scrollBy(0, 600);")
 
         self.assertIsNotNone(self.driver.find_element(By.ID, "volcanoPlot").find_element(By.CLASS_NAME, "plot-container"))
         self.assertEqual(self.driver.find_element(By.ID, "popupVolcanoPlot").value_of_css_property('display'), 'none')
@@ -232,7 +233,7 @@ class SeleniumTestWithAnalisis(StaticLiveServerTestCase):
 
         btn = self.driver.find_element(By.ID, "headingThree").find_element(By.CSS_SELECTOR, "button")
         self.driver.execute_script("arguments[0].click();", btn)
-        sleep(2)
+        sleep(10)
         self.driver.execute_script("window.scrollBy(0, 500);")
 
         self.assertIsNotNone(self.driver.find_element(By.ID, "bar-chart").find_element(By.CLASS_NAME, "plot-container"))
@@ -257,7 +258,7 @@ class SeleniumTestWithAnalisis(StaticLiveServerTestCase):
         ##################### Results Enrichment #############################
 
         self.driver.get(f'{self.live_server_url}/results/'+str(self.StudyCase1.id)+'/enrichment')
-        sleep(6.0) # wait for load scripts
+        sleep(8.0) # wait for load scripts
 
         tabla = self.driver.find_element(By.ID, 'diffExprDatatable')
         td_elements = tabla.find_elements(By.CSS_SELECTOR, 'tr')
@@ -278,7 +279,7 @@ class SeleniumTestWithAnalisis(StaticLiveServerTestCase):
         ######################### Resuslts Survival ##########################
 
         self.driver.get(f'{self.live_server_url}/results/'+str(self.StudyCase1.id)+'/survivalAnalysis')
-        sleep(6.0)
+        sleep(8.0)
 
         tabla = self.driver.find_element(By.ID, 'diffExprDatatable')
         td_elements = tabla.find_elements(By.CSS_SELECTOR, 'tr')
